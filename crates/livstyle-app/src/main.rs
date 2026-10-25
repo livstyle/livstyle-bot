@@ -22,136 +22,136 @@ script_mod! {
         height: 32
         padding: Inset{left: 14.0 right: 14.0 top: 0.0 bottom: 0.0}
         draw_bg +: {
-            color: #x1d4ed8
-            color_hover: #x2563eb
-            color_down: #x1e3a8a
-            border_color: #x1d4ed8
-            border_color_hover: #x3b82f6
-            border_color_down: #x1e3a8a
+            color: #x1677FF
+            color_hover: #x2b86ff
+            color_down: #x0f5ed4
+            border_color: #x1677FF
+            border_color_hover: #x00C8FF
+            border_color_down: #x0f5ed4
             border_radius: 6.0
             border_size: 0.0
         }
         draw_text +: {
-            color: #xf8fbff
+            color: #xE6F1FF
             color_hover: #xffffffff
-            color_down: #xf8fbff
-            color_focus: #xf8fbff
+            color_down: #xE6F1FF
+            color_focus: #xE6F1FF
             text_style: theme.font_bold{font_size: 13.0}
         }
     }
     let QuietButton = Button{
-        height: 32
+        height: 30
         padding: Inset{left: 10.0 right: 10.0 top: 0.0 bottom: 0.0}
         draw_bg +: {
-            color: #x10192b
-            color_hover: #x17233a
-            color_down: #x0c1422
-            border_color: #x10192b
-            border_color_hover: #x243044
-            border_color_down: #x10192b
+            color: #x0A2038
+            color_hover: #x0e2a48
+            color_down: #x07182C
+            border_color: #x173858
+            border_color_hover: #x00C8FF
+            border_color_down: #x173858
             border_radius: 6.0
-            border_size: 0.0
+            border_size: 1.0
         }
         draw_text +: {
-            color: #xc5d4ea
-            color_hover: #xf8fbff
-            color_down: #xf8fbff
-            color_focus: #xf8fbff
-            text_style: theme.font_bold{font_size: 13.0}
+            color: #xE6F1FF
+            color_hover: #xffffffff
+            color_down: #xE6F1FF
+            color_focus: #xE6F1FF
+            text_style: theme.font_bold{font_size: 12.0}
         }
     }
     let DangerButton = Button{
-        height: 32
+        height: 30
         padding: Inset{left: 10.0 right: 10.0 top: 0.0 bottom: 0.0}
         draw_bg +: {
-            color: #x2a1518
-            color_hover: #x3a1c20
-            color_down: #x1c1012
-            border_color: #x2a1518
-            border_color_hover: #x3a1c20
-            border_color_down: #x1c1012
+            color: #x2a1520
+            color_hover: #x3a1c28
+            color_down: #x1a1016
+            border_color: #xFF5C75
+            border_color_hover: #xFF5C75
+            border_color_down: #xFF5C75
             border_radius: 6.0
-            border_size: 0.0
+            border_size: 1.0
         }
         draw_text +: {
-            color: #xf0b4b4
+            color: #xFF5C75
             color_hover: #xfffff8
-            color_down: #xf0b4b4
-            color_focus: #xf0b4b4
-            text_style: theme.font_bold{font_size: 13.0}
+            color_down: #xFF5C75
+            color_focus: #xFF5C75
+            text_style: theme.font_bold{font_size: 12.0}
         }
     }
     let Section = Label{
-        draw_text.color: #x8aa0bd
+        draw_text.color: #x8EA8C7
         draw_text.text_style: theme.font_bold{font_size: 11.0}
     }
     let Title = Label{
-        draw_text.color: #xf4f7fb
+        draw_text.color: #xE6F1FF
         draw_text.text_style: theme.font_bold{font_size: 15.0}
     }
     let Muted = Label{
-        draw_text.color: #x8aa0bd
+        draw_text.color: #x8EA8C7
         draw_text.text_style.font_size: 12.0
     }
     let TaskFace = Button{
-        width: Fill height: 40
+        width: Fill height: 36
         align: Align{x: 0.0, y: 0.5}
-        padding: Inset{left: 10.0 right: 8.0 top: 0.0 bottom: 0.0}
+        padding: Inset{left: 8.0 right: 6.0 top: 0.0 bottom: 0.0}
         draw_bg +: {
-            color: #x10192b
-            color_hover: #x17233a
-            color_down: #x0c1422
-            color_focus: #x10192b
-            border_color: #x10192b
-            border_color_hover: #x243044
-            border_color_down: #x10192b
-            border_color_focus: #x10192b
+            color: #x07182C
+            color_hover: #x0A2038
+            color_down: #x061326
+            color_focus: #x07182C
+            border_color: #x07182C
+            border_color_hover: #x173858
+            border_color_down: #x07182C
+            border_color_focus: #x07182C
             border_radius: 6.0
             border_size: 0.0
         }
         draw_text +: {
-            color: #xd5e2f2
-            color_hover: #xf4f7fb
-            color_down: #xf4f7fb
-            color_focus: #xd5e2f2
+            color: #xE6F1FF
+            color_hover: #xffffffff
+            color_down: #xffffffff
+            color_focus: #xE6F1FF
             text_style: theme.font_bold{font_size: 12.0}
         }
     }
     let TaskFaceOn = Button{
-        width: Fill height: 40
+        width: Fill height: 36
         align: Align{x: 0.0, y: 0.5}
-        padding: Inset{left: 10.0 right: 8.0 top: 0.0 bottom: 0.0}
+        padding: Inset{left: 8.0 right: 6.0 top: 0.0 bottom: 0.0}
         draw_bg +: {
-            color: #x17315f
-            color_hover: #x1e3d72
-            color_down: #x1e3d72
-            color_focus: #x17315f
-            border_color: #x17315f
-            border_color_hover: #x1e3d72
-            border_color_down: #x1e3d72
-            border_color_focus: #x17315f
+            color: #x0A2038
+            color_hover: #x0e2c4c
+            color_down: #x0e2c4c
+            color_focus: #x0A2038
+            border_color: #x00C8FF
+            border_color_hover: #x00C8FF
+            border_color_down: #x00C8FF
+            border_color_focus: #x00C8FF
             border_radius: 6.0
-            border_size: 0.0
+            border_size: 1.0
         }
         draw_text +: {
-            color: #xe7f6ff
+            color: #xE6F1FF
             color_hover: #xffffffff
             color_down: #xffffffff
-            color_focus: #xe7f6ff
+            color_focus: #xE6F1FF
             text_style: theme.font_bold{font_size: 12.0}
         }
     }
     let TaskRow = View{
         width: Fill height: Fit
-        flow: Right spacing: 6
+        flow: Right spacing: 4
         open := TaskFace{text: "任务"}
-        delete := DangerButton{text: "删除" width: 52 height: 40}
+        delete := DangerButton{text: "删除" width: 48 height: 36}
     }
     let TaskRowOn = View{
         width: Fill height: Fit
-        flow: Right spacing: 6
+        flow: Right spacing: 4
         open := TaskFaceOn{text: "任务"}
-        delete := DangerButton{text: "删除" width: 52 height: 40}
+        delete := DangerButton{text: "删除" width: 48 height: 36}
     }
     mod.widgets.TaskListBase = #(TaskList::register_widget(vm))
     mod.widgets.TaskList = set_type_default() do mod.widgets.TaskListBase{
@@ -166,29 +166,29 @@ script_mod! {
     }
     let Field = TextInput{
         width: Fill height: 32
-        draw_text.color: #xe7eef8
-        draw_cursor.color: #x7dd3fc
-        draw_selection.color: #x1e3a8a
+        draw_cursor.color: #x00C8FF
+        draw_selection.color: #x1677FF
         draw_bg +: {
-            color: #x0b1220
-            color_hover: #x0b1220
-            color_focus: #x0b1220
-            color_empty: #x0b1220
-            border_color: #x1c2838
-            border_color_hover: #x243044
-            border_color_focus: #x38bdf8
-            border_color_empty: #x1c2838
+            color: #x030B18
+            color_hover: #x061326
+            color_focus: #x061326
+            color_empty: #x030B18
+            border_color: #x173858
+            border_color_hover: #x173858
+            border_color_focus: #x00C8FF
+            border_color_empty: #x173858
             border_radius: 6.0
             border_size: 1.0
         }
         draw_text +: {
-            color: #xe7eef8
-            color_hover: #xe7eef8
-            color_focus: #xe7eef8
-            color_down: #xe7eef8
-            color_empty: #x6d82a0
-            color_empty_hover: #x6d82a0
-            color_empty_focus: #x8aa0bd
+            color: #xE6F1FF
+            color_hover: #xE6F1FF
+            color_focus: #xE6F1FF
+            color_down: #xE6F1FF
+            color_empty: #x8EA8C7
+            color_empty_hover: #x8EA8C7
+            color_empty_focus: #xE6F1FF
+            text_style: theme.font_label{font_size: 13.0}
         }
     }
     let Log = TextInput{
@@ -196,28 +196,28 @@ script_mod! {
         is_multiline: true
         is_read_only: true
         padding: Inset{left: 8.0 right: 8.0 top: 6.0 bottom: 6.0}
-        draw_cursor.color: #x7dd3fc
-        draw_selection.color: #x1e3a8a
+        draw_cursor.color: #x00C8FF
+        draw_selection.color: #x1677FF
         draw_bg +: {
-            color: #x070d16
-            color_hover: #x070d16
-            color_focus: #x070d16
-            color_empty: #x070d16
-            border_color: #x070d16
-            border_color_hover: #x070d16
-            border_color_focus: #x070d16
-            border_color_empty: #x070d16
+            color: #x030B18
+            color_hover: #x030B18
+            color_focus: #x030B18
+            color_empty: #x030B18
+            border_color: #x030B18
+            border_color_hover: #x030B18
+            border_color_focus: #x030B18
+            border_color_empty: #x030B18
             border_radius: 6.0
             border_size: 0.0
         }
         draw_text +: {
-            color: #xb7f7c8
-            color_hover: #xb7f7c8
-            color_focus: #xb7f7c8
-            color_down: #xb7f7c8
-            color_empty: #x3d5c49
-            color_empty_hover: #x3d5c49
-            color_empty_focus: #x3d5c49
+            color: #x00D6A0
+            color_hover: #x00D6A0
+            color_focus: #x00D6A0
+            color_down: #x00D6A0
+            color_empty: #x3d6b5c
+            color_empty_hover: #x3d6b5c
+            color_empty_focus: #x3d6b5c
             text_style: theme.font_code{font_size: 11.0}
         }
     }
@@ -225,42 +225,45 @@ script_mod! {
     let app = startup() do #(App::script_component(vm)){
         ui: Root{
             main_window := Window{
-                pass.clear_color: #x070d18
+                pass.clear_color: #x030B18
                 window.inner_size: vec2(1440, 900)
-                caption_bar +: { draw_bg.color: #x070d18 }
+                caption_bar +: { draw_bg.color: #x030B18 }
                 body +: {
                     width: Fill height: Fill
                     flow: Down spacing: 0
-                    draw_bg.color: #x070d18
 
                     SolidView{
-                        width: Fill height: 48
-                        flow: Right spacing: 10
+                        width: Fill height: 56
+                        flow: Right spacing: 8
                         align: Align{y: 0.5}
-                        padding: Inset{left: 14.0 right: 12.0 top: 0.0 bottom: 0.0}
-                        draw_bg.color: #x0a1220
+                        padding: Inset{left: 16.0 right: 12.0 top: 0.0 bottom: 0.0}
+                        draw_bg.color: #x061326
                         SolidView{
                             width: 22 height: 22
                             align: Center
-                            draw_bg.color: #x5b4dff
+                            draw_bg.color: #x755CFF
                             draw_bg.border_radius: 4.0
                             Label{
                                 text: "L"
-                                draw_text.color: #x07111f
+                                draw_text.color: #xE6F1FF
                                 draw_text.text_style: theme.font_bold{font_size: 12.0}
                             }
                         }
-                        Title{text: "LIVSTYLE"}
-                        Muted{text: "工作台"}
-                        nav_work := QuietButton{text: "工作区" height: 28}
+                        View{
+                            width: Fit height: Fit
+                            flow: Down spacing: 0
+                            Title{text: "LIVSTYLE"}
+                            Muted{text: "AI Agent for IoT Development"}
+                        }
+                        nav_work := QuietButton{text: "工作台" height: 28}
                         nav_tasks := QuietButton{text: "任务" height: 28}
                         nav_devices := QuietButton{text: "设备" height: 28}
                         nav_library := QuietButton{text: "知识库" height: 28}
                         nav_plugins := QuietButton{text: "插件" height: 28}
                         Filler{}
+                        nav_current := Muted{text: "当前：工作台"}
                         octos_status := Muted{text: "Octos"}
                         cursor_status := Muted{text: "Cursor"}
-                        runtime := Muted{text: "Runtime"}
                         settings := QuietButton{text: "设置" height: 28}
                     }
 
@@ -268,19 +271,20 @@ script_mod! {
                         width: Fill height: Fit
                         visible: false
                         margin: Inset{left: 8.0 right: 8.0 top: 8.0 bottom: 0.0}
-                        padding: Inset{left: 12.0 right: 12.0 top: 10.0 bottom: 10.0}
+                        padding: 12
                         flow: Down spacing: 8
-                        draw_bg.color: #x1a140c
+                        draw_bg.color: #x1c160c
                         draw_bg.border_radius: 8.0
-                        draw_bg.border_size: 0.0
+                        draw_bg.border_size: 1.0
+                        draw_bg.border_color: #xFFB547
                         card_title := Label{
                             text: ""
                             draw_text.text_style: theme.font_bold{font_size: 16.0}
-                            draw_text.color: #xf0c36a
+                            draw_text.color: #xFFB547
                         }
                         card_body := Label{
                             text: ""
-                            draw_text.color: #xe7d7b8
+                            draw_text.color: #xE6F1FF
                             draw_text.text_style.font_size: 13.0
                         }
                         View{
@@ -298,10 +302,14 @@ script_mod! {
                         flow: Right spacing: 8
                         padding: 8
 
-                        task_pane := View{
-                            width: 248 height: Fill
-                            flow: Down spacing: 10
-                            padding: Inset{left: 8.0 right: 4.0 top: 4.0 bottom: 4.0}
+                        task_pane := RoundedView{
+                            width: 280 height: Fill
+                            flow: Down spacing: 8
+                            padding: 12
+                            draw_bg.color: #x061326
+                            draw_bg.border_radius: 10.0
+                            draw_bg.border_size: 1.0
+                            draw_bg.border_color: #x173858
                             Section{text: "当前项目"}
                             workspace := Field{empty_text: "项目文件夹路径"}
                             View{
@@ -310,32 +318,50 @@ script_mod! {
                                 browse := QuietButton{text: "浏览"}
                                 use_ws := PrimaryButton{text: "使用"}
                             }
-                            Section{text: "Agent Runtime"}
-                            use_octos := QuietButton{text: "Octos" width: Fill}
-                            use_cursor := QuietButton{text: "Cursor" width: Fill}
+                            Muted{width: Fill height: Fit text: "搜索未接入。"}
+                            Section{text: "工作区"}
+                            Muted{width: Fill height: Fit text: "目录以上面的路径为准。"}
                             Section{text: "设备"}
-                            board_toggle := QuietButton{text: "实时日志  ▾" width: Fill}
+                            board_toggle := QuietButton{text: "设备栏  ▾" width: Fill}
                             refresh := QuietButton{text: "刷新串口" width: Fill}
                             identify := QuietButton{text: "识别芯片" width: Fill}
                             flash := QuietButton{text: "记录烧录批准" width: Fill}
                             unknown := QuietButton{text: "结果未知" width: Fill}
-                            Section{text: "任务"}
+                            Section{text: "Agent Runtime"}
+                            use_octos := QuietButton{text: "Octos" width: Fill}
+                            use_cursor := QuietButton{text: "Cursor" width: Fill}
+                            Section{text: "后台任务"}
                             task_list := mod.widgets.TaskList{}
                             new_task := QuietButton{text: "新任务" width: Fill}
                         }
 
-                        chat_pane := View{
+                        chat_pane := RoundedView{
                             width: Fill height: Fill
                             flow: Down spacing: 8
-                            padding: Inset{left: 8.0 right: 8.0 top: 4.0 bottom: 4.0}
+                            padding: 12
+                            draw_bg.color: #x07182C
+                            draw_bg.border_radius: 10.0
+                            draw_bg.border_size: 1.0
+                            draw_bg.border_color: #x173858
                             View{
                                 width: Fill height: Fit
                                 flow: Right spacing: 8
                                 align: Align{y: 0.5}
-                                Title{text: "会话"}
+                                Title{text: "当前任务"}
                                 Filler{}
+                                pause := QuietButton{text: "暂停" height: 28}
+                                stop := DangerButton{text: "取消" height: 28}
                                 copy_chat := QuietButton{text: "复制" height: 28}
                             }
+                            Muted{
+                                width: Fill height: Fit
+                                text: "规划    环境检查    构建    烧录审批    设备连接    验证    完成"
+                            }
+                            Muted{
+                                width: Fill height: Fit
+                                text: "这些阶段没有节点数据，不会显示打勾或百分比。"
+                            }
+                            Section{text: "任务计划"}
                             plan_summary := Muted{
                                 width: Fill height: Fit
                                 text: "还没有保存的计划。"
@@ -343,16 +369,15 @@ script_mod! {
                             transcript := Log{
                                 empty_text: "对话会出现在这里。选中文字后按 Ctrl+C，或点「复制」。"
                                 draw_text +: {
-                                    color: #xe7eef8
-                                    color_hover: #xe7eef8
-                                    color_focus: #xe7eef8
-                                    color_down: #xe7eef8
-                                    color_empty: #x6d82a0
-                                    color_empty_hover: #x6d82a0
-                                    color_empty_focus: #x6d82a0
+                                    color: #xE6F1FF
+                                    color_hover: #xE6F1FF
+                                    color_focus: #xE6F1FF
+                                    color_down: #xE6F1FF
+                                    color_empty: #x8EA8C7
+                                    color_empty_hover: #x8EA8C7
+                                    color_empty_focus: #x8EA8C7
                                     text_style: theme.font_label{font_size: 13.0}
                                 }
-                                draw_bg +: { color: #x0c1424 color_hover: #x0c1424 color_focus: #x0c1424 color_empty: #x0c1424 }
                             }
                             composer_grip := View{
                                 width: Fill height: 10
@@ -361,68 +386,70 @@ script_mod! {
                                 View{
                                     width: Fill height: 1
                                     show_bg: true
-                                    draw_bg.color: #x243044
+                                    draw_bg.color: #x173858
                                 }
                             }
                             composer := Field{
                                 height: 72
                                 is_multiline: true
                                 padding: Inset{left: 10.0 right: 10.0 top: 8.0 bottom: 8.0}
-                                empty_text: "描述要做的事。发送给当前 Runtime，取消不会再开一轮。"
+                                empty_text: "输入你的任务需求。Shift+Enter 发送。"
                                 return_key_type: Done
                             }
                             View{
                                 width: Fill height: Fit
                                 flow: Right spacing: 8
                                 align: Align{y: 0.5}
-                                attach := QuietButton{text: "附件" height: 28}
+                                attach := QuietButton{text: "附件未接入" height: 28}
                                 hint := Muted{width: Fill height: Fit text: ""}
-                                pause := QuietButton{text: "暂停" height: 28}
-                                stop := DangerButton{text: "取消" height: 28}
                                 send := PrimaryButton{text: "发送" height: 28}
                             }
                         }
 
-                        board_body := View{
-                            width: 300 height: Fill
+                        board_body := RoundedView{
+                            width: 320 height: Fill
                             flow: Down spacing: 8
-                            padding: Inset{left: 4.0 right: 4.0 top: 4.0 bottom: 4.0}
-                            Title{text: "设备"}
+                            padding: 12
+                            draw_bg.color: #x061326
+                            draw_bg.border_radius: 10.0
+                            draw_bg.border_size: 1.0
+                            draw_bg.border_color: #x173858
+                            Title{text: "任务详情"}
+                            Section{text: "运行时"}
+                            runtime := Muted{width: Fill height: Fit text: "Runtime"}
+                            Section{text: "设备信息"}
                             board_status := Muted{width: Fill height: Fit text: "开发板"}
                             board_live := Log{
-                                height: 72
+                                height: 64
                                 empty_text: "等待串口扫描。"
                                 draw_text +: {
-                                    color: #xd7e8f8
-                                    color_hover: #xd7e8f8
-                                    color_focus: #xd7e8f8
-                                    color_down: #xd7e8f8
-                                    color_empty: #x6d82a0
-                                    color_empty_hover: #x6d82a0
-                                    color_empty_focus: #x6d82a0
+                                    color: #xE6F1FF
+                                    color_hover: #xE6F1FF
+                                    color_focus: #xE6F1FF
+                                    color_down: #xE6F1FF
+                                    color_empty: #x8EA8C7
+                                    color_empty_hover: #x8EA8C7
+                                    color_empty_focus: #x8EA8C7
                                     text_style: theme.font_code{font_size: 11.0}
                                 }
                             }
-                            Section{text: "设备记录"}
+                            Section{text: "实时日志"}
                             board_log := Log{empty_text: "串口和芯片识别会写在这里。"}
                             build_pane := View{
                                 width: Fill height: Fit
                                 visible: false
                                 flow: Down spacing: 4
-                                build_head := Section{text: "构建日志"}
-                                build_log := Log{
-                                    height: 96
-                                    empty_text: ""
-                                }
+                                build_head := Section{text: "产物与构建日志"}
+                                build_log := Log{height: 88 empty_text: ""}
                             }
                             View{
-                                width: Fill height: 132
+                                width: Fill height: 110
                                 flow: Down
                                 board_stage := mod.widgets.BoardStage{}
                             }
                             Muted{
                                 width: Fill height: Fit
-                                text: "验证断言和证据目录只在烧录验证通过后出现。"
+                                text: "没有烧录验证通过时，这里没有固件名，也没有证据目录。"
                             }
                         }
                     }
@@ -606,8 +633,10 @@ impl MatchEvent for App {
 
     fn handle_actions(&mut self, cx: &mut Cx, actions: &Actions) {
         if let Some((text, _)) = self.ui.text_input(cx, ids!(composer)).returned(actions) {
-            self.ui.text_input(cx, ids!(composer)).set_text(cx, "");
-            self.send(Cmd::Send(text));
+            if !text.trim().is_empty() {
+                self.ui.text_input(cx, ids!(composer)).set_text(cx, "");
+                self.send(Cmd::Send(text));
+            }
         }
         self.keep_readonly(cx, actions);
         if self.ui.button(cx, ids!(copy_chat)).clicked(actions) {
@@ -622,16 +651,18 @@ impl MatchEvent for App {
             self.ui.button(cx, ids!(board_toggle)).set_text(
                 cx,
                 if self.board_open {
-                    "实时日志  ▾"
+                    "设备栏  ▾"
                 } else {
-                    "实时日志  ▸"
+                    "设备栏  ▸"
                 },
             );
         }
         if self.ui.button(cx, ids!(send)).clicked(actions) {
             let text = self.ui.text_input(cx, ids!(composer)).text();
-            self.ui.text_input(cx, ids!(composer)).set_text(cx, "");
-            self.send(Cmd::Send(text));
+            if !text.trim().is_empty() {
+                self.ui.text_input(cx, ids!(composer)).set_text(cx, "");
+                self.send(Cmd::Send(text));
+            }
         }
         if self.ui.button(cx, ids!(pause)).clicked(actions) {
             self.send(Cmd::Pause);
@@ -659,6 +690,9 @@ impl MatchEvent for App {
             self.ui.view(cx, ids!(task_pane)).set_visible(cx, true);
             self.ui.view(cx, ids!(chat_pane)).set_visible(cx, true);
             self.ui.view(cx, ids!(board_body)).set_visible(cx, true);
+            self.ui
+                .label(cx, ids!(nav_current))
+                .set_text(cx, "当前：工作台");
         }
         if self.ui.button(cx, ids!(attach)).clicked(actions) {
             self.ui
@@ -669,10 +703,16 @@ impl MatchEvent for App {
             self.ui.view(cx, ids!(task_pane)).set_visible(cx, true);
             self.ui.view(cx, ids!(chat_pane)).set_visible(cx, true);
             self.ui.view(cx, ids!(board_body)).set_visible(cx, false);
+            self.ui
+                .label(cx, ids!(nav_current))
+                .set_text(cx, "当前：任务");
         }
         if self.ui.button(cx, ids!(nav_devices)).clicked(actions) {
             self.ui.view(cx, ids!(board_body)).set_visible(cx, true);
             self.ui.view(cx, ids!(chat_pane)).set_visible(cx, false);
+            self.ui
+                .label(cx, ids!(nav_current))
+                .set_text(cx, "当前：设备");
         }
         if self.ui.button(cx, ids!(nav_library)).clicked(actions)
             || self.ui.button(cx, ids!(nav_plugins)).clicked(actions)

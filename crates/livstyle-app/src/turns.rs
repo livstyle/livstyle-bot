@@ -86,6 +86,44 @@ pub fn cancel_effect(status: TaskStatus) -> CancelEffect {
     }
 }
 
+/// Whether the open Octos session is the one this task must use.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SessionAlign {
+    Keep,
+    Reopen,
+}
+
+pub fn session_align(open: Option<&str>, wanted: &str) -> SessionAlign {
+    if open == Some(wanted) {
+        SessionAlign::Keep
+    } else {
+        SessionAlign::Reopen
+    }
+}
+
+/// Which Cursor agent a task may use. A live agent from another task is not reused.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum CursorAgentChoice {
+    Reuse(String),
+    Resume(String),
+    Create,
+}
+
+pub fn cursor_agent_choice(
+    stored_for_task: Option<&str>,
+    live_agent: Option<&str>,
+    live_cwd: Option<&str>,
+    cwd: &str,
+) -> CursorAgentChoice {
+    match stored_for_task {
+        Some(stored) if live_agent == Some(stored) && live_cwd == Some(cwd) => {
+            CursorAgentChoice::Reuse(stored.to_string())
+        }
+        Some(stored) => CursorAgentChoice::Resume(stored.to_string()),
+        None => CursorAgentChoice::Create,
+    }
+}
+
 pub fn busy_text(agent: CodeAgent) -> BusyText {
     if agent.can_steer() {
         BusyText::Steer
@@ -522,5 +560,25 @@ mod tests {
         );
         assert_eq!(busy_text(CodeAgent::Cursor), BusyText::Queue);
         assert_eq!(busy_text(CodeAgent::Octos), BusyText::Steer);
+        assert_eq!(
+            session_align(Some("livstyle:local:a"), "livstyle:local:a"),
+            SessionAlign::Keep
+        );
+        assert_eq!(
+            session_align(Some("livstyle:local:a"), "livstyle:local:b"),
+            SessionAlign::Reopen
+        );
+        assert_eq!(
+            cursor_agent_choice(Some("agent-a"), Some("agent-a"), Some("/w"), "/w"),
+            CursorAgentChoice::Reuse("agent-a".into())
+        );
+        assert_eq!(
+            cursor_agent_choice(Some("agent-b"), Some("agent-a"), Some("/w"), "/w"),
+            CursorAgentChoice::Resume("agent-b".into())
+        );
+        assert_eq!(
+            cursor_agent_choice(None, Some("agent-a"), Some("/w"), "/w"),
+            CursorAgentChoice::Create
+        );
     }
 }

@@ -1,5 +1,17 @@
 # livstyle 实施计划
 
+## 2026-10-25 对话闭环增量
+
+范围：用户输入必须进当前任务自己的 Octos 会话或 Cursor agent，不能沿用上一个任务的连接。
+
+- `crates/livstyle-app/src/turns.rs`：`session_align`、`cursor_agent_choice`。
+- `crates/livstyle-app/src/worker.rs`：`ask_octos` 在 session 不一致时重开；`ensure_cursor_agent` 按任务 mapping 复用或 `resume_agent`。
+- `crates/livstyle-app/src/main.rs`：空输入不发送。
+
+验证：`cargo test -p livstyle-app --offline --bin livstyle-app`。没有 Key 或 Bridge 时 Cursor 端到端标为未验证。没有 `octos serve` 时 Octos 端到端标为未验证。
+
+# livstyle 实施计划（原阶段）
+
 依据：`docs/development/CURRENT_STATE.md`（2026-10-25）。本文件只排期，不授权改代码。确认后再做 Phase 0。
 
 原则：不新写第二套 Agent 循环；不把 `EspRunner` 塞进按钮回调；不用假百分比或假在线点代替扫描结果；每个阶段可单独回滚。

@@ -4,9 +4,11 @@
 
 2026-10-25 增量：取消不再调用 `send("不做了")`。空闲时的取消按钮、输入「不做了」、以及运行中的取消，都只把未结束的产品任务迁到 `Cancelled`，并停下当前 Runtime 调用。已结束的任务不会因此再开一轮。排队的下一句在取消后丢掉。
 
+2026-10-25 对话闭环：`App::handle_actions` 把非空输入交给 `Cmd::Send`。`worker::State::send` 按 `CodeAgent` 进入 `ask_octos` 或 `ask_cursor`。Octos 在发送前用 `session_align` 核对 `octos_session_id()`，对不上就丢掉旧的 `session_id` 和 `active_turn`，再 `ensure_session`。Cursor 用 `cursor_agent_choice`：任务上已有 agent 且不是当前 cwd 下那个活 agent 时走 `resume_agent`，没有记录才 `create_agent`。事件仍经 `apply_beats` / `write_turn_line` 写回 `turn_task`。连接失败只写 `hint`，没有 mock 成功。
 
 
-`design/reference/livstyle-dashboard.png` **不在仓库中**。本文件不把那张图当作已读取的设计资产。桌面端当前界面是 `crates/livstyle-app/src/main.rs` 里的 Makepad 脚本：顶栏、横幅、左栏、对话、右侧日志。其中导航文案「任务 / 设备 / 知识库 / 插件」是静态 `Label`，没有页面切换。
+
+`design/reference/livstyle-dashboard.png` 在仓库中，作为工作台布局参考。桌面端界面是 `crates/livstyle-app/src/main.rs` 里的 Makepad 脚本：顶栏、左栏、对话、右侧任务详情。导航可以切换对应面板；知识库和插件仍标明未接入。图上的阶段打勾和百分比没有对应数据，界面不绘制。
 
 ## A. 仓库结构
 

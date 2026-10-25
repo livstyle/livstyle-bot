@@ -20,8 +20,9 @@ use makepad_widgets::makepad_platform::thread::SignalToUI;
 use serde_json::Value;
 
 use crate::turns::{
-    busy_text, cancel_effect, cursor_beats, octos_beats, plan_switch, BusyText, CancelEffect,
-    CodeAgent, SwitchPlan, TurnBeat,
+    busy_text, cancel_effect, cursor_agent_choice, cursor_beats, octos_beats, plan_switch,
+    session_align, BusyText, CancelEffect, CodeAgent, CursorAgentChoice, SessionAlign, SwitchPlan,
+    TurnBeat,
 };
 
 #[derive(Debug)]
@@ -425,15 +426,13 @@ impl State {
                 self.hint = "任务已经结束，没有重新发给 Runtime。".into();
                 self.say("livstyle：取消没有再执行这一轮。".into());
             }
-            CancelEffect::MarkCancelled => {
-                match self.svc.transition(&id, TaskStatus::Cancelled) {
-                    Ok(_) => {
-                        self.hint = "已取消。没有把它记成成功，也没有重新发送。".into();
-                        self.say("livstyle：任务已取消。".into());
-                    }
-                    Err(err) => self.hint = format!("没有取消：{err}"),
+            CancelEffect::MarkCancelled => match self.svc.transition(&id, TaskStatus::Cancelled) {
+                Ok(_) => {
+                    self.hint = "已取消。没有把它记成成功，也没有重新发送。".into();
+                    self.say("livstyle：任务已取消。".into());
                 }
-            }
+                Err(err) => self.hint = format!("没有取消：{err}"),
+            },
         }
     }
 
@@ -473,10 +472,7 @@ impl State {
             }
             Err(err) => {
                 self.pending_digest = None;
-                self.card = Some(notice(
-                    "不能烧录",
-                    &format!("{err}\n没有调用烧录器。"),
-                ));
+                self.card = Some(notice("不能烧录", &format!("{err}\n没有调用烧录器。")));
             }
         }
     }
@@ -503,8 +499,11 @@ impl State {
             self.hint = "没有找到 ESP-IDF，没有烧录。".into();
             return;
         };
-        let mut runner =
-            livstyle_esp::EspRunner::for_install("esp", install, Box::new(livstyle_esp::SystemExec));
+        let mut runner = livstyle_esp::EspRunner::for_install(
+            "esp",
+            install,
+            Box::new(livstyle_esp::SystemExec),
+        );
         let mut ports = livstyle_esp::PortMap::new();
         ports.insert(
             livstyle_hardware::DeviceId::new(port.display().to_string()),
@@ -518,8 +517,7 @@ impl State {
         };
         match livstyle_esp::commit_flash(&mut runner, &offer, &approved, &task) {
             Ok(digest) => {
-                self.build_log
-                    .push(format!("烧录写入完成，摘要 {digest}"));
+                self.build_log.push(format!("烧录写入完成，摘要 {digest}"));
                 self.finish_flash_log(&port, &task, &digest);
             }
             Err(err) => {
@@ -737,6 +735,11 @@ impl State {
         self.busy = true;
         self.turn_task = Some(self.selected.clone());
         self.live = self.transcript.clone();
+        let wanted = self.octos_session_id();
+        if session_align(self.session_id.as_deref(), &wanted) == SessionAlign::Reopen {
+            self.active_turn = None;
+            self.session_id = None;
+        }
         if self.session_id.is_none() && !self.ensure_session() {
             self.hint = "Octos 会话没有打开。".into();
             self.finish_turn(rx);
@@ -748,7 +751,11 @@ impl State {
         };
         let turn_id = new_turn_id(self.seq);
         let mut started = self.dispatch_turn(&session, &turn_id, text);
-        if started.as_ref().err().is_some_and(|err| link_failure_text(err)) {
+        if started
+            .as_ref()
+            .err()
+            .is_some_and(|err| link_failure_text(err))
+        {
             self.say("Octos：连接断了，重连一次。".into());
             self.octos = None;
             self.attach_octos();
@@ -815,7 +822,9 @@ impl State {
             if wait_started.elapsed() > Duration::from_secs(180) {
                 self.active_turn = None;
                 self.mark_unsettled();
-                self.say("Octos：超过 3 分钟还没有结束这一轮。任务标成未完成，没有另开会话。".into());
+                self.say(
+                    "Octos：超过 3 分钟还没有结束这一轮。任务标成未完成，没有另开会话。".into(),
+                );
                 self.hint = "这一轮已停下。".into();
                 break;
             }
@@ -904,7 +913,7 @@ impl State {
                 }
             }
             if self.poll_turn(rx) == TurnCtrl::Cancel {
-                    if let Some(id) = &run_id {
+                if let Some(id) = &run_id {
                     if let Some(link) = self.cursor.as_ref().filter(|link| link.caps.interrupt) {
                         if let Err(err) = link.client.cancel_run(id, Some(&agent_id)) {
                             self.hint = format!("取消 Cursor 没有成功：{err}");
@@ -963,7 +972,10 @@ impl State {
                 TurnBeat::Step(step) => self.say(format!("{who} · {step}")),
                 TurnBeat::Done => {
                     if acc.trim().is_empty() {
-                        self.write_turn_line(Some(line), format!("{who}：这一轮结束了，上面是执行步骤。"));
+                        self.write_turn_line(
+                            Some(line),
+                            format!("{who}：这一轮结束了，上面是执行步骤。"),
+                        );
                     }
                     self.hint = format!("{who} 已回复。");
                     terminal = true;
@@ -1150,9 +1162,7 @@ impl State {
                 }
                 Some(Err(err)) => {
                     self.octos_status = format!("Octos  会话 {session} 没有恢复");
-                    self.say(format!(
-                        "Octos：hydrate 失败，没有另开会话：{err}"
-                    ));
+                    self.say(format!("Octos：hydrate 失败，没有另开会话：{err}"));
                 }
                 None => return,
             }
@@ -1250,12 +1260,9 @@ impl State {
                 } else {
                     "session"
                 };
-                let _ = self.svc.bind_runtime(
-                    &self.selected,
-                    agent.runtime_id(),
-                    kind,
-                    &external,
-                );
+                let _ = self
+                    .svc
+                    .bind_runtime(&self.selected, agent.runtime_id(), kind, &external);
             }
         }
         self.say(format!("livstyle：之后的对话交给 {}。", agent.label()));
@@ -1870,15 +1877,41 @@ impl State {
             }
             link.model.clone().unwrap()
         };
-        let reused = self.cursor.as_ref().and_then(|link| {
-            if link.agent_cwd.as_deref() == Some(cwd.as_str()) {
-                link.agent_id.clone()
-            } else {
-                None
+        let stored = if self.selected.is_empty() {
+            None
+        } else {
+            self.svc
+                .mapping(&self.selected, "cursor", "agent")
+                .map_err(|e| e.to_string())?
+        };
+        let (live_agent, live_cwd) = self
+            .cursor
+            .as_ref()
+            .map(|link| (link.agent_id.clone(), link.agent_cwd.clone()))
+            .unwrap_or((None, None));
+        match cursor_agent_choice(
+            stored.as_deref(),
+            live_agent.as_deref(),
+            live_cwd.as_deref(),
+            &cwd,
+        ) {
+            CursorAgentChoice::Reuse(id) => return Ok(id),
+            CursorAgentChoice::Resume(id) => {
+                let handle = self
+                    .cursor
+                    .as_ref()
+                    .ok_or_else(|| "Cursor 没有连上".to_string())?
+                    .client
+                    .resume_agent(&id, &model, std::path::Path::new(&cwd))
+                    .map_err(|e| format!("没有恢复这个任务的 Cursor agent：{e}"))?;
+                if let Some(link) = self.cursor.as_mut() {
+                    link.agent_id = Some(handle.agent_id.clone());
+                    link.agent_cwd = Some(cwd.clone());
+                }
+                self.cursor_status = format!("Cursor  {}  {}", model, cwd);
+                return Ok(handle.agent_id);
             }
-        });
-        if let Some(id) = reused {
-            return Ok(id);
+            CursorAgentChoice::Create => {}
         }
         let handle = self
             .cursor

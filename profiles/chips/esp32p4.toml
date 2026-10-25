@@ -1,0 +1,31 @@
+schema_version = 1
+chip = "esp32p4"
+display_name = "ESP32-P4"
+arch = "riscv"
+hp_cores = 2
+lp_core = true
+support_tier = "experimental"
+
+[idf]
+min_version = "5.3"
+
+[revisions]
+notes = "Pre-v3 silicon needs a different revision selection in sdkconfig; the revision must be read with esptool before flashing. Set min/max once the supported range is fixed in ADR-007."
+
+[usb]
+usb_serial_jtag = true
+
+[debug]
+openocd_target = "target/esp32p4.cfg"
+openocd_interface = "interface/esp_usb_jtag.cfg"
+gdb = "riscv32-esp-elf-gdb"
+
+# No radio: Wi-Fi/BLE come from a companion chip declared in the board profile.
+[radio]
+
+[boot]
+log_patterns = ["main_task: Calling app_main()"]
+
+[provenance]
+status = "draft"
+sources = ["EspSmith src-tauri/src/commands/openocd.rs"]

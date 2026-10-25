@@ -1,0 +1,19 @@
+[package]
+name = "livstyle-app"
+description = "Makepad workbench: tasks, plan, devices, interventions"
+version.workspace = true
+edition = "2021"
+license.workspace = true
+
+[dependencies]
+makepad-widgets = { path = "../../../../makepad/widgets", version = "2.0.0" }
+livstyle-core.workspace = true
+livstyle-domain.workspace = true
+livstyle-steering.workspace = true
+livstyle-secrets.workspace = true
+livstyle-esp.workspace = true
+livstyle-hardware.workspace = true
+livstyle-cursor.workspace = true
+livstyle-octos.workspace = true
+livstyle-http.workspace = true
+serde_json.workspace = true

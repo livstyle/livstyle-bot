@@ -1,0 +1,15 @@
+[package]
+name = "livstyle-cursor"
+description = "Cursor SDK Bridge (sdk.v1) adapter: bridge manager, Connect transport, agent/run client"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+livstyle-http.workspace = true
+livstyle-secrets.workspace = true
+livstyle-steering.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true

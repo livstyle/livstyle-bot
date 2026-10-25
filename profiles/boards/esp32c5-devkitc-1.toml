@@ -1,0 +1,43 @@
+# Acceptance board for the RISC-V side (ADR-007). Pin assignments are draft:
+# confirm against the ESP32-C5-DevKitC-1 user guide and the ESP32-C5
+# datasheet, then run `livstyle chip-info` on the real board and set
+# provenance.status = "verified".
+schema_version = 1
+id = "esp32c5-devkitc-1"
+display_name = "ESP32-C5-DevKitC-1 (N8R4)"
+chip = "esp32c5"
+module = "ESP32-C5-WROOM-1-N8R4"
+support_tier = "verified"
+flash_size_mb = 8
+psram = { kind = "quad", size_mb = 4 }
+console = "uart_bridge"
+auto_download = true
+
+reserved_pins = [
+    { gpio = 2, reason = "strapping" },
+    { gpio = 7, reason = "strapping" },
+    { gpio = 13, reason = "USB D-" },
+    { gpio = 14, reason = "USB D+" },
+    { gpio = 16, reason = "SPI flash / PSRAM" },
+    { gpio = 17, reason = "SPI flash / PSRAM" },
+    { gpio = 18, reason = "SPI flash / PSRAM" },
+    { gpio = 19, reason = "SPI flash / PSRAM" },
+    { gpio = 20, reason = "SPI flash / PSRAM" },
+    { gpio = 21, reason = "SPI flash / PSRAM" },
+    { gpio = 22, reason = "SPI flash / PSRAM" },
+    { gpio = 25, reason = "strapping" },
+    { gpio = 26, reason = "strapping" },
+    { gpio = 27, reason = "strapping (also RGB LED)" },
+    { gpio = 28, reason = "strapping: boot mode (BOOT button)" },
+]
+
+onboard = [{ name = "rgb_led_ws2812", gpio = 27 }, { name = "boot_button", gpio = 28 }]
+
+[flash]
+mode = "dio"
+freq = "80m"
+partition_table = "partitions_singleapp"
+
+[provenance]
+status = "draft"
+sources = ["pending: ESP32-C5-DevKitC-1 user guide, ESP32-C5 datasheet §2 strapping pins"]

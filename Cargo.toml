@@ -1,0 +1,47 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/livstyle-domain",
+    "crates/livstyle-profiles",
+    "crates/livstyle-hardware",
+    "crates/livstyle-steering",
+    "crates/livstyle-http",
+    "crates/livstyle-secrets",
+    "crates/livstyle-cursor",
+    "crates/livstyle-judge",
+    "crates/livstyle-cli",
+    "crates/livstyle-store",
+    "crates/livstyle-workspace",
+    "crates/livstyle-esp",
+    "crates/livstyle-octos",
+    "crates/livstyle-core",
+    "crates/livstyle-app",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85.0"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+livstyle-domain = { path = "crates/livstyle-domain" }
+livstyle-profiles = { path = "crates/livstyle-profiles" }
+livstyle-hardware = { path = "crates/livstyle-hardware" }
+livstyle-steering = { path = "crates/livstyle-steering" }
+livstyle-http = { path = "crates/livstyle-http" }
+livstyle-secrets = { path = "crates/livstyle-secrets" }
+livstyle-cursor = { path = "crates/livstyle-cursor" }
+livstyle-store = { path = "crates/livstyle-store" }
+livstyle-judge = { path = "crates/livstyle-judge" }
+livstyle-esp = { path = "crates/livstyle-esp" }
+livstyle-workspace = { path = "crates/livstyle-workspace" }
+livstyle-octos = { path = "crates/livstyle-octos" }
+livstyle-core = { path = "crates/livstyle-core" }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+sha2 = "0.10"
+hex = "0.4"
+thiserror = "2"

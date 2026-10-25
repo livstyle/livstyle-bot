@@ -1,0 +1,44 @@
+schema_version = 1
+id = "esp32s3-devkitc-1-n8r8"
+display_name = "ESP32-S3-DevKitC-1 (N8R8)"
+chip = "esp32s3"
+module = "ESP32-S3-WROOM-1-N8R8"
+support_tier = "verified"
+flash_size_mb = 8
+psram = { kind = "octal", size_mb = 8 }
+console = "uart_bridge"
+usb_bridge = "cp210x"
+auto_download = true
+
+reserved_pins = [
+    { gpio = 0, reason = "strapping: boot mode" },
+    { gpio = 3, reason = "strapping: JTAG source" },
+    { gpio = 45, reason = "strapping: VDD_SPI voltage" },
+    { gpio = 46, reason = "strapping: boot mode / ROM log" },
+    { gpio = 19, reason = "USB D-" },
+    { gpio = 20, reason = "USB D+" },
+    { gpio = 26, reason = "SPI flash" },
+    { gpio = 27, reason = "SPI flash" },
+    { gpio = 28, reason = "SPI flash" },
+    { gpio = 29, reason = "SPI flash" },
+    { gpio = 30, reason = "SPI flash" },
+    { gpio = 31, reason = "SPI flash" },
+    { gpio = 32, reason = "SPI flash" },
+    { gpio = 33, reason = "octal PSRAM" },
+    { gpio = 34, reason = "octal PSRAM" },
+    { gpio = 35, reason = "octal PSRAM" },
+    { gpio = 36, reason = "octal PSRAM" },
+    { gpio = 37, reason = "octal PSRAM" },
+]
+
+# RGB LED is on GPIO48 on board v1.0 and GPIO38 on v1.1; pin it per board revision.
+onboard = [{ name = "rgb_led_ws2812" }, { name = "boot_button", gpio = 0 }]
+
+[flash]
+mode = "dio"
+freq = "80m"
+partition_table = "partitions_singleapp"
+
+[provenance]
+status = "draft"
+sources = []

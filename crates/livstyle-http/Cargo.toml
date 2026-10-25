@@ -1,0 +1,10 @@
+[package]
+name = "livstyle-http"
+description = "Minimal blocking HTTP/1.1 client for loopback services (Cursor bridge, local judge)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+thiserror.workspace = true

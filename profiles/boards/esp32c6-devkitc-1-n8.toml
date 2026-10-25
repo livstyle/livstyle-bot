@@ -1,0 +1,36 @@
+schema_version = 1
+id = "esp32c6-devkitc-1-n8"
+display_name = "ESP32-C6-DevKitC-1 (N8)"
+chip = "esp32c6"
+module = "ESP32-C6-WROOM-1-N8"
+support_tier = "verified"
+flash_size_mb = 8
+console = "uart_bridge"
+usb_bridge = "cp210x"
+auto_download = true
+
+reserved_pins = [
+    { gpio = 8, reason = "strapping (also RGB LED)" },
+    { gpio = 9, reason = "strapping: boot mode" },
+    { gpio = 15, reason = "strapping" },
+    { gpio = 12, reason = "USB D-" },
+    { gpio = 13, reason = "USB D+" },
+    { gpio = 24, reason = "SPI flash" },
+    { gpio = 25, reason = "SPI flash" },
+    { gpio = 26, reason = "SPI flash" },
+    { gpio = 27, reason = "SPI flash" },
+    { gpio = 28, reason = "SPI flash" },
+    { gpio = 29, reason = "SPI flash" },
+    { gpio = 30, reason = "SPI flash" },
+]
+
+onboard = [{ name = "rgb_led_ws2812", gpio = 8 }, { name = "boot_button", gpio = 9 }]
+
+[flash]
+mode = "dio"
+freq = "80m"
+partition_table = "partitions_singleapp"
+
+[provenance]
+status = "draft"
+sources = []

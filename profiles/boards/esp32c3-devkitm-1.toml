@@ -1,0 +1,29 @@
+schema_version = 1
+id = "esp32c3-devkitm-1"
+display_name = "ESP32-C3-DevKitM-1"
+chip = "esp32c3"
+module = "ESP32-C3-MINI-1"
+support_tier = "verified"
+flash_size_mb = 4
+console = "uart_bridge"
+usb_bridge = "cp210x"
+auto_download = true
+
+reserved_pins = [
+    { gpio = 2, reason = "strapping" },
+    { gpio = 8, reason = "strapping (also RGB LED)" },
+    { gpio = 9, reason = "strapping: boot mode" },
+    { gpio = 18, reason = "USB D-" },
+    { gpio = 19, reason = "USB D+" },
+]
+
+onboard = [{ name = "rgb_led_ws2812", gpio = 8 }, { name = "boot_button", gpio = 9 }]
+
+[flash]
+mode = "dio"
+freq = "80m"
+partition_table = "partitions_singleapp"
+
+[provenance]
+status = "draft"
+sources = []

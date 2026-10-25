@@ -1,0 +1,31 @@
+schema_version = 1
+chip = "esp32c5"
+display_name = "ESP32-C5"
+arch = "riscv"
+hp_cores = 1
+lp_core = true
+support_tier = "verified"
+
+[idf]
+min_version = "5.5"
+
+[usb]
+usb_serial_jtag = true
+native_ids = [[0x303A, 0x1001]]
+
+[debug]
+openocd_target = "target/esp32c5.cfg"
+openocd_interface = "interface/esp_usb_jtag.cfg"
+gdb = "riscv32-esp-elf-gdb"
+
+[radio]
+wifi = { standard = "wifi6", bands = ["2.4ghz", "5ghz"] }
+ble = true
+ieee802154 = true
+
+[boot]
+log_patterns = ["main_task: Calling app_main()"]
+
+[provenance]
+status = "draft"
+sources = ["EspSmith src-tauri/src/commands/openocd.rs"]

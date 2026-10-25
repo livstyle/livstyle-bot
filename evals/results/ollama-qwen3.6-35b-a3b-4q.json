@@ -1,0 +1,33 @@
+{
+  "judge": "ollama:hf.co/hesamation/Qwen3.6-35B-A3B-Claude-4.6-Opus-Reasoning-Distilled-GGUF:Q6_K",
+  "cases": 112,
+  "failures": 0,
+  "threshold": 0.8,
+  "intent": {
+    "accuracy": 0.9196428571428571,
+    "ece": 0.030799788289836497,
+    "coverage_at_threshold": 0.875,
+    "accuracy_at_threshold": 0.9795918367346939
+  },
+  "scope": {
+    "accuracy": 0.5178571428571429,
+    "ece": 0.2664948917393174,
+    "coverage_at_threshold": 0.5446428571428571,
+    "accuracy_at_threshold": 0.6885245901639344
+  },
+  "hardware_accuracy": 0.9553571428571429,
+  "hardware_false_negatives": 0,
+  "latency_p50_ms": 8885,
+  "latency_p95_ms": 9223,
+  "misses": [
+    "ac-03: intent amend_requirement (gold append_context) conf 0.69",
+    "am-03: intent append_context (gold amend_requirement) conf 0.73",
+    "am-06: intent append_context (gold amend_requirement) conf 0.82",
+    "am-10: intent append_context (gold amend_requirement) conf 0.37",
+    "pa-04: intent cancel_step (gold pause) conf 0.49",
+    "cs-09: intent reprioritize (gold cancel_step) conf 0.68",
+    "cs-11: intent reprioritize (gold cancel_step) conf 0.57",
+    "cs-12: intent reprioritize (gold cancel_step) conf 0.52",
+    "cs-14: intent reprioritize (gold cancel_step) conf 0.86"
+  ]
+}

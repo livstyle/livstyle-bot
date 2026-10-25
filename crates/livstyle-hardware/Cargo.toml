@@ -1,0 +1,16 @@
+[package]
+name = "livstyle-hardware"
+description = "Hardware Supervisor, device leases and runner contract (PRD §10)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+livstyle-domain.workspace = true
+livstyle-profiles.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha2.workspace = true
+hex.workspace = true
+thiserror.workspace = true

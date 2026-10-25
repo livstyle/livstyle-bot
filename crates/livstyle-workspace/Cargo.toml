@@ -1,0 +1,10 @@
+[package]
+name = "livstyle-workspace"
+description = "Per-run git worktree isolation with single-writer locks (ADR-012)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+thiserror.workspace = true

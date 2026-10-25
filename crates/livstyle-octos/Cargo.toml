@@ -1,0 +1,18 @@
+[package]
+name = "livstyle-octos"
+description = "Blocking Octos OUP client: JSON-RPC over the loopback UI-protocol WebSocket (Spike 2)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+livstyle-http.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+sha1 = "0.10"
+thiserror.workspace = true
+
+[dev-dependencies]
+sha1 = "0.10"
+serde_json.workspace = true

@@ -1,0 +1,24 @@
+[package]
+name = "livstyle-cli"
+description = "Headless livstyle commands: credentials, spikes, evals, devices"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "livstyle"
+path = "src/main.rs"
+
+[dependencies]
+livstyle-cursor.workspace = true
+livstyle-octos.workspace = true
+livstyle-domain.workspace = true
+livstyle-esp.workspace = true
+livstyle-hardware.workspace = true
+livstyle-judge.workspace = true
+livstyle-profiles.workspace = true
+livstyle-secrets.workspace = true
+livstyle-steering.workspace = true
+clap = { version = "4.5", features = ["derive"] }
+serde_json.workspace = true

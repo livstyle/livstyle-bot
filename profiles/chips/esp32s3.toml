@@ -1,0 +1,29 @@
+schema_version = 1
+chip = "esp32s3"
+display_name = "ESP32-S3"
+arch = "xtensa"
+hp_cores = 2
+support_tier = "verified"
+
+[idf]
+min_version = "4.4"
+
+[usb]
+usb_serial_jtag = true
+native_ids = [[0x303A, 0x1001]]
+
+[debug]
+openocd_target = "target/esp32s3.cfg"
+openocd_interface = "interface/esp_usb_jtag.cfg"
+gdb = "xtensa-esp-elf-gdb"
+
+[radio]
+wifi = { standard = "wifi4", bands = ["2.4ghz"] }
+ble = true
+
+[boot]
+log_patterns = ["main_task: Calling app_main()"]
+
+[provenance]
+status = "draft"
+sources = ["EspSmith src-tauri/src/commands/openocd.rs", "EspSmith src-tauri/src/connection.rs"]

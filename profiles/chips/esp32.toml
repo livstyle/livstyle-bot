@@ -1,0 +1,29 @@
+schema_version = 1
+chip = "esp32"
+display_name = "ESP32"
+arch = "xtensa"
+hp_cores = 2
+support_tier = "experimental"
+
+[idf]
+min_version = "4.4"
+
+[usb]
+usb_serial_jtag = false
+
+[debug]
+openocd_target = "target/esp32.cfg"
+openocd_interface = "interface/ftdi/esp32_devkitj_v1.cfg"
+gdb = "xtensa-esp-elf-gdb"
+
+[radio]
+wifi = { standard = "wifi4", bands = ["2.4ghz"] }
+bt_classic = true
+ble = true
+
+[boot]
+log_patterns = ["main_task: Calling app_main()"]
+
+[provenance]
+status = "draft"
+sources = ["EspSmith src-tauri/src/commands/openocd.rs"]

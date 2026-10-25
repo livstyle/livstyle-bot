@@ -1,0 +1,26 @@
+schema_version = 1
+id = "esp32p4-function-ev-board"
+display_name = "ESP32-P4-Function-EV-Board"
+chip = "esp32p4"
+support_tier = "experimental"
+flash_size_mb = 16
+psram = { kind = "hex", size_mb = 32 }
+console = "uart_bridge"
+auto_download = true
+
+# Strapping and peripheral pins still to be filled in from the board schematic (ADR-007).
+reserved_pins = []
+
+[companion]
+chip = "esp32c6"
+role = "wifi_ble"
+link = "esp-hosted-sdio"
+
+[flash]
+mode = "qio"
+freq = "80m"
+partition_table = "partitions_singleapp"
+
+[provenance]
+status = "draft"
+sources = []

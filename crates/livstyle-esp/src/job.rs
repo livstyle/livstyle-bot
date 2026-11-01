@@ -61,7 +61,7 @@ pub fn flash_offer(build_dir: &Path, device_id: &str, chip: &str) -> Result<Flas
             .collect(),
         extra: Default::default(),
     };
-    let digest = params.digest();
+    let digest = params.digest().map_err(|e| e.to_string())?;
     Ok(FlashOffer {
         digest,
         chip: chip.to_string(),
@@ -178,10 +178,10 @@ mod tests {
             regions: vec![],
             extra: Default::default(),
         };
-        let digest = params.digest();
+        let digest = params.digest().unwrap();
         params.runner_id = RunnerId::new("mock");
         let offer = FlashOffer {
-            digest: params.digest(),
+            digest: params.digest().unwrap(),
             chip: "esp32c3".into(),
             params,
         };

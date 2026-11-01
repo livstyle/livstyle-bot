@@ -72,6 +72,8 @@ pub enum SecretError {
     InsecurePermissions { path: PathBuf },
     #[error("secret {0:?} must not be empty")]
     Empty(String),
+    #[error("credentials serialize: {0}")]
+    Serialize(String),
 }
 
 #[derive(Default, Serialize, Deserialize)]
@@ -185,7 +187,7 @@ impl CredentialStore {
         if let Some(dir) = self.path.parent() {
             fs::create_dir_all(dir).map_err(|e| self.io(e))?;
         }
-        let text = toml::to_string(data).expect("credentials serialize");
+        let text = toml::to_string(data).map_err(|e| SecretError::Serialize(e.to_string()))?;
         let tmp = self.path.with_extension("toml.tmp");
         let mut file = open_private(&tmp).map_err(|e| self.io(e))?;
         file.write_all(text.as_bytes()).map_err(|e| self.io(e))?;

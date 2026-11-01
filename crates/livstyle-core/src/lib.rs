@@ -195,11 +195,20 @@ impl Service {
         self.store
             .record_intervention(intervention_id, task_id, input)?;
         let (_, task) = self.task(task_id)?;
+        let plan_outline = match self.store.latest_plan::<livstyle_domain::Plan>(task_id)? {
+            Some(saved) => saved
+                .value
+                .nodes()
+                .iter()
+                .map(|n| format!("{:?}  {}  {:?}", n.status, n.title, n.kind))
+                .collect(),
+            None => Vec::new(),
+        };
         let judgment = judge
             .judge(&InterventionContext {
                 task_summary: task.workspace_id.clone(),
                 current_node: task.current_node_id.clone(),
-                plan_outline: Vec::new(),
+                plan_outline,
                 input: input.into(),
             })
             .map_err(|e| CoreError::Judge(e.to_string()))?;
@@ -374,7 +383,21 @@ fn move_to(task: &mut ProductTask, next: TaskStatus) -> Result<bool, CoreError> 
 }
 
 fn status_of(task: &ProductTask) -> String {
-    format!("{:?}", task.status)
+    match task.status {
+        TaskStatus::Queued => "Queued",
+        TaskStatus::Planning => "Planning",
+        TaskStatus::Running => "Running",
+        TaskStatus::AwaitingApproval => "AwaitingApproval",
+        TaskStatus::Replanning => "Replanning",
+        TaskStatus::Paused => "Paused",
+        TaskStatus::Verifying => "Verifying",
+        TaskStatus::Succeeded => "Succeeded",
+        TaskStatus::Failed => "Failed",
+        TaskStatus::Cancelled => "Cancelled",
+        TaskStatus::Blocked => "Blocked",
+        TaskStatus::OutcomeUnknown => "OutcomeUnknown",
+    }
+    .to_owned()
 }
 
 #[cfg(test)]

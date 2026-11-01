@@ -81,10 +81,10 @@ impl Judge for RuleJudge {
             (Intent::Pause, 0.85, Scope::CurrentStep)
         } else if hit(&text, CANCEL_STEP) {
             (Intent::CancelStep, 0.85, Scope::CurrentStep)
+        } else if hit(&text, AMEND) {
+            (Intent::AmendRequirement, 0.7, Scope::RemainingPlan)
         } else if hit(&text, REPRIORITIZE) {
             (Intent::Reprioritize, 0.6, Scope::RemainingPlan)
-        } else if hit(&text, AMEND) {
-            (Intent::AmendRequirement, 0.6, Scope::RemainingPlan)
         } else if hit(&text, QUESTION) {
             (Intent::SideQuestion, 0.6, Scope::Unrelated)
         } else {

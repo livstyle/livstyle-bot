@@ -298,18 +298,18 @@ impl Store {
 
     /// Task ids with the given statuses, oldest first.
     pub fn tasks_with_status(&self, statuses: &[&str]) -> Result<Vec<String>> {
-        let mut stmt = self
-            .conn
-            .prepare("SELECT id, status FROM tasks ORDER BY created_ms, id")?;
-        let rows = stmt.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?;
-        let mut out = Vec::new();
-        for row in rows {
-            let (id, status) = row?;
-            if statuses.contains(&status.as_str()) {
-                out.push(id);
-            }
+        if statuses.is_empty() {
+            return Ok(Vec::new());
         }
-        Ok(out)
+        let placeholders: Vec<&str> = statuses.iter().map(|_| "?").collect();
+        let sql = format!(
+            "SELECT id FROM tasks WHERE status IN ({}) ORDER BY created_ms, id",
+            placeholders.join(", ")
+        );
+        let mut stmt = self.conn.prepare(&sql)?;
+        let rows =
+            stmt.query_map(rusqlite::params_from_iter(statuses.iter()), |r| r.get(0))?;
+        Ok(rows.collect::<std::result::Result<_, _>>()?)
     }
 
     // ---- plans -------------------------------------------------------------

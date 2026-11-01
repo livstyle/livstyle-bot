@@ -50,7 +50,7 @@ pub struct EspRunner {
     program: PathBuf,
     base_args: Vec<String>,
     dialect: Dialect,
-    pub baud: u32,
+    baud: u32,
 }
 
 impl EspRunner {
@@ -86,6 +86,14 @@ impl EspRunner {
 
     pub fn set_ports(&mut self, ports: PortMap) {
         self.ports = ports;
+    }
+
+    pub fn baud(&self) -> u32 {
+        self.baud
+    }
+
+    pub fn set_baud(&mut self, baud: u32) {
+        self.baud = baud;
     }
 
     /// Reads the chip type. This resets the board into download mode and back.
@@ -427,7 +435,7 @@ mod tests {
             operation_id: OperationId::new(format!("op{token}")),
             task_id: TaskId::new("t"),
             fencing_token: FencingToken(token),
-            parameters_digest: params.digest(),
+            parameters_digest: params.digest().unwrap(),
             params,
         }
     }

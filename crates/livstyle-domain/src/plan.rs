@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::fmt;
 
 use serde::{Deserialize, Serialize};
@@ -126,10 +126,35 @@ impl PlanDiff {
 
 /// Product-level plan graph. Nodes are stored in a topological order: every
 /// dependency must be declared before its dependents.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Plan {
     pub version: u64,
     nodes: Vec<PlanNode>,
+    #[serde(skip)]
+    index: HashMap<NodeId, usize>,
+}
+
+impl<'de> Deserialize<'de> for Plan {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        #[derive(Deserialize)]
+        struct Raw {
+            version: u64,
+            nodes: Vec<PlanNode>,
+        }
+        let raw = Raw::deserialize(deserializer)?;
+        let mut index = HashMap::new();
+        for (i, node) in raw.nodes.iter().enumerate() {
+            index.insert(node.id.clone(), i);
+        }
+        Ok(Self {
+            version: raw.version,
+            nodes: raw.nodes,
+            index,
+        })
+    }
 }
 
 impl Plan {
@@ -148,7 +173,11 @@ impl Plan {
                 return Err(PlanError::DuplicateNode(node.id.clone()));
             }
         }
-        Ok(Self { version: 1, nodes })
+        let mut index = HashMap::new();
+        for (i, node) in nodes.iter().enumerate() {
+            index.insert(node.id.clone(), i);
+        }
+        Ok(Self { version: 1, nodes, index })
     }
 
     pub fn nodes(&self) -> &[PlanNode] {
@@ -156,16 +185,15 @@ impl Plan {
     }
 
     pub fn node(&self, id: &NodeId) -> Option<&PlanNode> {
-        self.nodes.iter().find(|n| &n.id == id)
+        self.index.get(id).map(|&i| &self.nodes[i])
     }
 
     pub fn set_status(&mut self, id: &NodeId, status: NodeStatus) -> Result<(), PlanError> {
-        let node = self
-            .nodes
-            .iter_mut()
-            .find(|n| &n.id == id)
+        let &i = self
+            .index
+            .get(id)
             .ok_or_else(|| PlanError::UnknownNode(id.clone()))?;
-        node.status = status;
+        self.nodes[i].status = status;
         Ok(())
     }
 

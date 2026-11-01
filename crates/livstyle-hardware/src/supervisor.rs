@@ -98,6 +98,8 @@ pub enum SupervisorError {
     ConfirmationRequired,
     #[error("operation in state {state:?} cannot accept this transition")]
     InvalidState { state: OperationState },
+    #[error("parameter serialization failed: {0}")]
+    ParamsSerialize(String),
 }
 
 /// Deterministic hardware safety boundary. Agents and judges call into it;
@@ -169,7 +171,10 @@ impl Supervisor {
         };
         let record = OperationRecord {
             operation_id: operation_id.clone(),
-            parameters_digest: intent.params.digest(),
+            parameters_digest: intent
+                .params
+                .digest()
+                .map_err(|e| SupervisorError::ParamsSerialize(e.to_string()))?,
             intent,
             state,
             approval: None,
@@ -418,6 +423,10 @@ impl Supervisor {
     }
 
     fn log(&mut self, at: Millis, op: Option<&OperationId>, kind: &str, detail: String) {
+        const MAX_AUDIT_ENTRIES: usize = 10_000;
+        if self.audit.len() >= MAX_AUDIT_ENTRIES {
+            self.audit.drain(0..MAX_AUDIT_ENTRIES / 4);
+        }
         self.audit.push(AuditEvent {
             at,
             operation_id: op.cloned(),

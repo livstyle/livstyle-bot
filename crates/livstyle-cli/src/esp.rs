@@ -136,7 +136,7 @@ pub fn chip_info(port_or_id: &str, yes: bool) -> Result<(), String> {
         operation_id: OperationId::new("cli-chip-info"),
         task_id: TaskId::new("cli"),
         fencing_token: FencingToken(1),
-        parameters_digest: params.digest(),
+        parameters_digest: params.digest().map_err(|e| e.to_string())?,
         params,
     };
     match runner.execute(&req) {

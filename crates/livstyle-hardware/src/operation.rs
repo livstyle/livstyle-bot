@@ -74,9 +74,9 @@ pub struct OperationParams {
 impl OperationParams {
     /// SHA-256 over the canonical JSON encoding (struct field order is fixed,
     /// maps are ordered).
-    pub fn digest(&self) -> String {
-        let bytes = serde_json::to_vec(self).expect("params serialize");
-        hex::encode(Sha256::digest(bytes))
+    pub fn digest(&self) -> Result<String, serde_json::Error> {
+        let bytes = serde_json::to_vec(self)?;
+        Ok(hex::encode(Sha256::digest(bytes)))
     }
 }
 

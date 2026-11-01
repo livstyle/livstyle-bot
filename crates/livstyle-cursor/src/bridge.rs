@@ -123,7 +123,10 @@ impl Bridge {
             .spawn()
             .map_err(|e| CursorError::Launch(format!("spawn {}: {e}", config.binary.display())))?;
 
-        let stderr = child.stderr.take().expect("stderr piped");
+        let stderr = child
+            .stderr
+            .take()
+            .ok_or_else(|| CursorError::Launch("stderr not piped".into()))?;
         let tail = Arc::new(Mutex::new(VecDeque::new()));
         let (tx, rx) = mpsc::channel();
         {
@@ -140,7 +143,7 @@ impl Bridge {
                         // Never retain the ready line: older bridges inline the token.
                         continue;
                     }
-                    let mut t = tail.lock().expect("stderr tail");
+                    let mut t = tail.lock().unwrap_or_else(|e| e.into_inner());
                     if t.len() == STDERR_TAIL {
                         t.pop_front();
                     }
@@ -194,7 +197,10 @@ impl Bridge {
                 return Err(CursorError::Launch("ready line has no auth token".into()));
             }
         };
-        let endpoint = Endpoint::attach(&ready.endpoint_url().expect("validated"), &token)?;
+        let url = ready
+            .endpoint_url()
+            .ok_or_else(|| CursorError::Launch("ready line has no endpoint URL".into()))?;
+        let endpoint = Endpoint::attach(&url, &token)?;
         Ok(Self {
             child: Some(child),
             endpoint,
@@ -214,7 +220,7 @@ impl Bridge {
     pub fn stderr_tail(&self) -> Vec<String> {
         self.stderr_tail
             .lock()
-            .expect("stderr tail")
+            .unwrap_or_else(|e| e.into_inner())
             .iter()
             .cloned()
             .collect()
@@ -319,7 +325,7 @@ mod tests {
 }
 
 fn joined(tail: &Arc<Mutex<VecDeque<String>>>) -> String {
-    let t = tail.lock().expect("stderr tail");
+    let t = tail.lock().unwrap_or_else(|e| e.into_inner());
     let lines: Vec<&str> = t
         .iter()
         .map(String::as_str)

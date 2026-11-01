@@ -127,6 +127,12 @@ impl FrameReader {
             .read_exact(&mut head)
             .map_err(|e| CursorError::Transport(format!("stream ended without end frame: {e}")))?;
         let len = u32::from_be_bytes([head[1], head[2], head[3], head[4]]) as usize;
+        const MAX_FRAME_SIZE: usize = 64 * 1024 * 1024; // 64 MB
+        if len > MAX_FRAME_SIZE {
+            return Err(CursorError::Transport(format!(
+                "frame size {len} exceeds maximum {MAX_FRAME_SIZE}"
+            )));
+        }
         let mut payload = vec![0u8; len];
         self.inner
             .read_exact(&mut payload)

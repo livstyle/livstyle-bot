@@ -2,6 +2,7 @@
 //! images, offsets and write-flash options for a build.
 
 use std::collections::BTreeMap;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 
 use serde::Deserialize;
@@ -56,11 +57,21 @@ impl FlasherArgs {
         for (off, rel) in raw.flash_files {
             let offset = parse_offset(&off).ok_or_else(|| format!("bad offset {off:?}"))?;
             let file = build_dir.join(&rel);
-            let bytes = std::fs::read(&file).map_err(|e| format!("{}: {e}", file.display()))?;
+            let mut hasher = Sha256::new();
+            let mut f =
+                std::fs::File::open(&file).map_err(|e| format!("{}: {e}", file.display()))?;
+            let mut buf = [0u8; 8192];
+            loop {
+                let n = f.read(&mut buf).map_err(|e| format!("{}: {e}", file.display()))?;
+                if n == 0 {
+                    break;
+                }
+                hasher.update(&buf[..n]);
+            }
             files.push(FlashFile {
                 offset,
                 path: file,
-                sha256: hex::encode(Sha256::digest(&bytes)),
+                sha256: hex::encode(hasher.finalize()),
             });
         }
         files.sort_by_key(|f| f.offset);

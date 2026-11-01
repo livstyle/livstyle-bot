@@ -23,8 +23,20 @@ const STDERR_TAIL: usize = 200;
 /// `$XDG_DATA_HOME/livstyle/cursor-sdk-bridge/<pinned>/bin/cursor-sdk-bridge`.
 /// The archive's `manifest.json` must declare `protocol == "sdk.v1"`.
 pub fn locate_bridge() -> Result<PathBuf, CursorError> {
+    if cfg!(target_os = "android") {
+        return Err(CursorError::Launch(
+            "Android 没有经过验证的本机 Cursor Bridge。Cursor 后端不可用，Octos 仍可使用。".into(),
+        ));
+    }
     if let Some(bin) = std::env::var_os("LIVSTYLE_CURSOR_BRIDGE_BIN") {
-        return Ok(PathBuf::from(bin));
+        let path = PathBuf::from(bin);
+        if !path.is_file() {
+            return Err(CursorError::Launch(format!(
+                "LIVSTYLE_CURSOR_BRIDGE_BIN is not a file: {}",
+                path.display()
+            )));
+        }
+        return Ok(path);
     }
     let data = std::env::var_os("XDG_DATA_HOME")
         .map(PathBuf::from)
@@ -273,13 +285,27 @@ fn bridge_tmpdir() -> PathBuf {
 
 #[cfg(test)]
 mod tests {
-    use super::pick_writable_dir;
+    use super::{check_manifest, pick_writable_dir};
+
+    #[test]
+    fn manifest_must_declare_sdk_v1() {
+        let root = std::env::temp_dir().join(format!("livstyle-manifest-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(root.join("manifest.json"), r#"{"protocol":"other"}"#).unwrap();
+        let err = check_manifest(&root).unwrap_err().to_string();
+        assert!(err.contains("sdk.v1"), "{err}");
+        std::fs::write(root.join("manifest.json"), r#"{"protocol":"sdk.v1"}"#).unwrap();
+        assert!(check_manifest(&root).is_ok());
+        let _ = std::fs::remove_dir_all(&root);
+    }
 
     #[test]
     fn skips_a_directory_that_cannot_be_written() {
         let base = std::env::var_os("XDG_RUNTIME_DIR")
             .map(std::path::PathBuf::from)
-            .or_else(|| std::env::var_os("HOME").map(|home| std::path::PathBuf::from(home).join(".cache")))
+            .or_else(|| {
+                std::env::var_os("HOME").map(|home| std::path::PathBuf::from(home).join(".cache"))
+            })
             .unwrap_or_else(std::env::temp_dir);
         let root = base.join(format!("livstyle-tmpdir-{}", std::process::id()));
         let blocked = root.join("blocked");

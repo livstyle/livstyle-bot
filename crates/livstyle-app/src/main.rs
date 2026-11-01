@@ -1,12 +1,15 @@
 pub use makepad_widgets;
 
 mod board_view;
+mod mentor;
+mod settings;
 mod turns;
 mod worker;
 
 use std::sync::{mpsc, Mutex};
 
 use makepad_widgets::*;
+use mentor::Desk;
 use turns::CodeAgent;
 use worker::{Cmd, Snapshot, TaskLine};
 
@@ -548,54 +551,7 @@ script_mod! {
                         View{
                             width: Fit height: Fit
                             flow: Down spacing: 0
-                            Muted{text: "AI Agent for IoT Development"}
-                        }
-                        View{
-                            width: Fit height: Fit
-                            flow: Right spacing: 4
-                            align: Align{y: 0.5}
-                            Glyph{text: ""}
-                            View{
-                                width: Fit height: Fit
-                                nav_work := NavOn{text: "工作台" height: 30}
-                                nav_work_idle := NavOff{text: "工作台" height: 30 visible: false}
-                            }
-                        }
-                        View{
-                            width: Fit height: Fit
-                            flow: Right spacing: 4
-                            align: Align{y: 0.5}
-                            Glyph{text: ""}
-                            View{
-                                width: Fit height: Fit
-                                nav_tasks := NavOn{text: "任务" height: 30 visible: false}
-                                nav_tasks_idle := NavOff{text: "任务" height: 30}
-                            }
-                        }
-                        View{
-                            width: Fit height: Fit
-                            flow: Right spacing: 4
-                            align: Align{y: 0.5}
-                            Glyph{text: ""}
-                            View{
-                                width: Fit height: Fit
-                                nav_devices := NavOn{text: "设备" height: 30 visible: false}
-                                nav_devices_idle := NavOff{text: "设备" height: 30}
-                            }
-                        }
-                        View{
-                            width: Fit height: Fit
-                            flow: Right spacing: 4
-                            align: Align{y: 0.5}
-                            Glyph{text: ""}
-                            nav_library := NavOff{text: "知识库" height: 30}
-                        }
-                        View{
-                            width: Fit height: Fit
-                            flow: Right spacing: 4
-                            align: Align{y: 0.5}
-                            Glyph{text: ""}
-                            nav_plugins := NavOff{text: "插件" height: 30}
+                            Muted{text: "AI 硬件导师"}
                         }
                         Filler{}
                         RoundedView{
@@ -678,7 +634,6 @@ script_mod! {
                             Filler{}
                         }
                     }
-
                     workbench := View{
                         width: Fill height: Fill
                         flow: Overlay
@@ -692,8 +647,263 @@ script_mod! {
 
                         View{
                             width: Fill height: Fill
-                            flow: Right spacing: 0
+                            flow: Right spacing: 8
                             padding: 8
+
+                        rail := RoundedView{
+                            width: 196 height: Fill
+                            flow: Down spacing: 4
+                            padding: 10
+                            draw_bg.color: #x07182C
+                            draw_bg.border_color: #x145A78
+                            draw_bg.border_size: 1.0
+                            draw_bg.border_radius: 14.0
+                            rail_toggle := QuietButton{text: "收起导航" width: Fill height: 28}
+                            nav_work := NavOn{text: "工作台" width: Fill height: 34}
+                            nav_work_idle := NavOff{text: "工作台" width: Fill height: 34 visible: false}
+                            nav_tasks := NavOn{text: "我的项目" width: Fill height: 34 visible: false}
+                            nav_tasks_idle := NavOff{text: "我的项目" width: Fill height: 34}
+                            nav_mentor := NavOn{text: "AI 导师" width: Fill height: 34 visible: false}
+                            nav_mentor_idle := NavOff{text: "AI 导师" width: Fill height: 34}
+                            nav_devices := NavOn{text: "设备与硬件" width: Fill height: 34 visible: false}
+                            nav_devices_idle := NavOff{text: "设备与硬件" width: Fill height: 34}
+                            nav_scene := NavOn{text: "三维调试" width: Fill height: 34 visible: false}
+                            nav_scene_idle := NavOff{text: "三维调试" width: Fill height: 34}
+                            nav_library := NavOn{text: "技能库" width: Fill height: 34 visible: false}
+                            nav_library_idle := NavOff{text: "技能库" width: Fill height: 34}
+                            nav_plugins := NavOn{text: "设置" width: Fill height: 34 visible: false}
+                            nav_plugins_idle := NavOff{text: "设置" width: Fill height: 34}
+                            Filler{}
+                            rail_foot := View{
+                                width: Fill height: Fit
+                                flow: Down spacing: 4
+                                Muted{width: Fill height: Fit text: "ESP32 开发助手"}
+                                rail_link := Muted{width: Fill height: Fit text: "正在检查导师连接"}
+                            }
+                        }
+
+                        View{
+                            width: Fill height: Fill
+                            flow: Overlay
+
+                        studio := View{
+                            width: Fill height: Fill
+                            flow: Right spacing: 8
+
+                            View{
+                                width: Fill height: Fill
+                                flow: Down spacing: 8
+
+                                studio_home := View{
+                                    width: Fill height: Fill
+                                    flow: Down spacing: 8
+                                    Title{text: "你想做一个什么作品？"}
+                                    Muted{width: Fill height: Fit text: "告诉 livstyle 目标。只有写好接线清单的项目会进入逐步指导。"}
+                                    goal := Field{
+                                        height: 128
+                                        is_multiline: true
+                                        padding: Inset{left: 10.0 right: 10.0 top: 8.0 bottom: 8.0}
+                                        empty_text: "例如：做一个监测房间温湿度的装置"
+                                        return_key_type: Done
+                                        draw_text.max_lines: 12
+                                        draw_text.text_overflow: TextOverflow.Ellipsis
+                                    }
+                                    goal_grip := View{
+                                        width: Fill height: 12
+                                        align: Center
+                                        cursor: MouseCursor.NsResize
+                                        View{
+                                            width: 72 height: 3
+                                            show_bg: true
+                                            draw_bg.color: #x1A6F96
+                                            draw_bg.border_radius: 1.5
+                                        }
+                                    }
+                                    goal_send := PrimaryButton{text: "交给导师" width: Fit}
+                                    View{
+                                        width: Fill height: Fit
+                                        flow: Right spacing: 8
+                                        pick_dht := PrimaryButton{text: "温湿度监测器" width: Fill}
+                                        pick_led := QuietButton{text: "点亮 LED" width: Fill}
+                                        pick_pir := QuietButton{text: "人体感应灯" width: Fill}
+                                    }
+                                    InfoCard{
+                                        Section{text: "已核对的清单"}
+                                        Muted{width: Fill height: Fit text: "温湿度：DHT11，VCC→3V3，DATA→GPIO4，GND→GND，不接 VIN。资料来源仍是草稿，确认结果不会标成实测。"}
+                                        Muted{width: Fill height: Fit text: "点亮 LED、人体感应灯：没有引脚表，按钮只说明未接入。"}
+                                    }
+                                    InfoCard{
+                                        Section{text: "当前设备"}
+                                        h_board := Muted{width: Fill height: Fit text: "还没有串口记录"}
+                                        studio_refresh := QuietButton{text: "刷新串口" width: Fit}
+                                    }
+                                    h_note := Muted{width: Fill height: Fit text: ""}
+                                }
+
+                                studio_project := View{
+                                    width: Fill height: Fill
+                                    visible: false
+                                    flow: Down spacing: 8
+                                    View{
+                                        width: Fill height: Fit
+                                        flow: Right spacing: 8
+                                        align: Align{y: 0.5}
+                                        View{
+                                            width: Fill height: Fit
+                                            flow: Down spacing: 2
+                                            s_title := Title{text: "点亮你的第一个传感器"}
+                                            s_sub := Muted{width: Fill height: Fit text: ""}
+                                        }
+                                        s_step := Muted{text: "第 2 步 / 7"}
+                                    }
+                                    View{
+                                        width: Fill height: Fit
+                                        flow: Right spacing: 6
+                                        tab_wire := QuietButton{text: "接线" height: 28}
+                                        tab_photo := QuietButton{text: "实物" height: 28}
+                                        tab_3d := QuietButton{text: "三维" height: 28}
+                                        Filler{}
+                                        check_wires := QuietButton{text: "检查接线" height: 28}
+                                        prep_deploy := QuietButton{text: "准备部署" height: 28}
+                                        hand_code := PrimaryButton{text: "交给导师" height: 28}
+                                    }
+                                    wire_canvas := InfoCard{
+                                        width: Fill height: Fill
+                                        Section{text: "接线清单  ·  不是实物照片"}
+                                        wire_0 := Label{
+                                            width: Fill height: Fit
+                                            draw_text.color: #xE6F1FF
+                                            draw_text.text_style: theme.font_label{font_size: 13.0}
+                                            text: ""
+                                        }
+                                        wire_1 := Label{
+                                            width: Fill height: Fit
+                                            draw_text.color: #xE6F1FF
+                                            draw_text.text_style: theme.font_label{font_size: 13.0}
+                                            text: ""
+                                        }
+                                        wire_2 := Label{
+                                            width: Fill height: Fit
+                                            draw_text.color: #xE6F1FF
+                                            draw_text.text_style: theme.font_label{font_size: 13.0}
+                                            text: ""
+                                        }
+                                        Muted{width: Fill height: Fit text: "左：3V3  GND  GPIO。右：VIN 不要接。当前这根线写在右侧导师卡。"}
+                                        s_legend := Muted{width: Fill height: Fit text: ""}
+                                    }
+                                    photo_canvas := InfoCard{
+                                        width: Fill height: Fill
+                                        visible: false
+                                        Section{text: "实物摄像头"}
+                                        s_camera := Muted{width: Fill height: Fit text: "摄像头关闭。"}
+                                        View{
+                                            width: Fill height: Fit
+                                            flow: Right spacing: 8
+                                            cam_on := QuietButton{text: "允许摄像头" width: Fit}
+                                            cam_off := DangerButton{text: "关闭" width: Fit}
+                                        }
+                                    }
+                                    scene_canvas := InfoCard{
+                                        width: Fill height: Fill
+                                        visible: false
+                                        flow: Down spacing: 6
+                                        Section{text: "三维示意图"}
+                                        s_scene := Muted{width: Fill height: Fit text: ""}
+                                        View{
+                                            width: Fill height: Fill
+                                            studio_stage := mod.widgets.BoardStage{}
+                                        }
+                                    }
+                                    View{
+                                        width: Fill height: 188
+                                        flow: Right spacing: 8
+                                        InfoCard{
+                                            width: 168 height: Fill
+                                            Section{text: "项目进度"}
+                                            prog_0 := Muted{width: Fill height: Fit text: ""}
+                                            prog_1 := Muted{width: Fill height: Fit text: ""}
+                                            prog_2 := Muted{width: Fill height: Fit text: ""}
+                                            prog_3 := Muted{width: Fill height: Fit text: ""}
+                                            prog_4 := Muted{width: Fill height: Fit text: ""}
+                                            prog_5 := Muted{width: Fill height: Fit text: ""}
+                                            prog_6 := Muted{width: Fill height: Fit text: ""}
+                                        }
+                                        InfoCard{
+                                            width: Fill height: Fill
+                                            Section{text: "设备记录"}
+                                            s_serial := Label{
+                                                width: Fill height: Fill
+                                                draw_text.color: #xE6F1FF
+                                                draw_text.text_style: theme.font_label{font_size: 11.0}
+                                                text: ""
+                                            }
+                                        }
+                                        InfoCard{
+                                            width: 168 height: Fill
+                                            Section{text: "设备状态"}
+                                            s_temp := Muted{width: Fill height: Fit text: "温度  未观测"}
+                                            s_hum := Muted{width: Fill height: Fit text: "湿度  未观测"}
+                                            s_wifi := Muted{width: Fill height: Fit text: "Wi-Fi  未观测"}
+                                            s_gpio := Muted{width: Fill height: Fit text: "GPIO4  未观测"}
+                                        }
+                                        InfoCard{
+                                            width: 180 height: Fill
+                                            Section{text: "项目信息"}
+                                            s_info := Muted{width: Fill height: Fit text: ""}
+                                        }
+                                    }
+                                }
+                            }
+
+                            mentor_col := RoundedView{
+                                width: 300 height: Fill
+                                flow: Down spacing: 8
+                                padding: 12
+                                draw_bg.color: #x07182C
+                                draw_bg.border_color: #x1A6F96
+                                draw_bg.border_size: 1.0
+                                draw_bg.border_radius: 14.0
+                                View{
+                                    width: Fill height: Fit
+                                    flow: Right spacing: 6
+                                    align: Align{y: 0.5}
+                                    Title{text: "AI 硬件导师"}
+                                    Filler{}
+                                    mentor_dot := StatusDot{draw_bg.color: #xFFB547}
+                                }
+                                m_action := Label{
+                                    width: Fill height: Fit
+                                    draw_text.color: #xE6F1FF
+                                    draw_text.text_style: theme.font_bold{font_size: 14.0}
+                                    text: "先选一个作品。"
+                                }
+                                m_steps := Label{
+                                    width: Fill height: Fit
+                                    draw_text.color: #xE6F1FF
+                                    draw_text.text_style: theme.font_label{font_size: 12.0}
+                                    text: ""
+                                }
+                                m_why := Muted{width: Fill height: Fit text: ""}
+                                m_safety := Label{
+                                    width: Fill height: Fit
+                                    draw_text.color: #xFFB547
+                                    draw_text.text_style: theme.font_label{font_size: 12.0}
+                                    text: ""
+                                }
+                                m_verify := Muted{width: Fill height: Fit text: ""}
+                                m_legend := Muted{width: Fill height: Fit text: ""}
+                                s_evidence := Muted{width: Fill height: Fit text: ""}
+                                Filler{}
+                                m_note := Muted{width: Fill height: Fit text: ""}
+                                mentor_done := PrimaryButton{text: "我已完成" width: Fill height: 36}
+                                mentor_help := QuietButton{text: "我遇到问题" width: Fill height: 32}
+                            }
+                        }
+
+                        legacy := View{
+                            width: Fill height: Fill
+                            visible: false
+                            flow: Right spacing: 0
 
                         task_pane := PanelSide{
                             width: 300 height: Fill
@@ -1001,8 +1211,9 @@ script_mod! {
                                             text_style: theme.font_label{font_size: 11.0}
                                         }
                                     }
+                                    Muted{width: Fill height: Fit text: "三维小窗。和工作台、三维调试是同一块示意图，这里只作预览。"}
                                     View{
-                                        width: Fill height: 72
+                                        width: Fill height: 168
                                         flow: Down
                                         board_stage := mod.widgets.BoardStage{}
                                     }
@@ -1044,6 +1255,173 @@ script_mod! {
                             }
                         }
                         }
+
+                        skills_pane := RoundedView{
+                            width: Fill height: Fill
+                            visible: false
+                            margin: 8
+                            padding: 16
+                            flow: Down spacing: 8
+                            draw_bg.color: #x07182C
+                            draw_bg.border_radius: 12.0
+                            draw_bg.border_size: 1.0
+                            draw_bg.border_color: #x145A78
+                            ScrollYView{
+                                width: Fill height: Fill
+                                flow: Down spacing: 8
+                                View{
+                                    width: Fill height: Fit
+                                    flow: Right spacing: 8
+                                    align: Align{y: 0.5}
+                                    Title{text: "技能库"}
+                                    Filler{}
+                                    skills_close := DangerButton{text: "关闭" height: 28}
+                                }
+                                Muted{width: Fill height: Fit text: "市场里的技能还没装进 Octos。本地导入和草稿只校验文件，不执行 scripts，也不调用 skill/action/invoke。"}
+                                View{
+                                    width: Fill height: Fit
+                                    flow: Right spacing: 6
+                                    skills_tab_market := QuietButton{text: "市场" width: Fit}
+                                    skills_tab_installed := QuietButton{text: "已安装" width: Fit}
+                                    skills_tab_mine := QuietButton{text: "我的技能" width: Fit}
+                                    skills_tab_project := QuietButton{text: "项目技能" width: Fit}
+                                    skills_tab_records := QuietButton{text: "使用记录" width: Fit}
+                                }
+                                skills_body := Label{
+                                    width: Fill
+                                    text: ""
+                                    draw_text.color: #xE6F1FF
+                                    draw_text.text_style: theme.font_label{font_size: 13.0}
+                                }
+                                skill_query := Field{empty_text: "在市场里按名称或说明筛选"}
+                                skills_filter := QuietButton{text: "筛选市场" width: Fit}
+                                View{
+                                    width: Fill height: Fit
+                                    flow: Right spacing: 8
+                                    skills_refresh := QuietButton{text: "向 Octos 刷新" width: Fit}
+                                    skills_actions := QuietButton{text: "读取动作列表" width: Fit}
+                                }
+                                skill_name := Field{empty_text: "技能名，例如 esp32-wiring-guide"}
+                                View{
+                                    width: Fill height: Fit
+                                    flow: Right spacing: 8
+                                    skills_bind := PrimaryButton{text: "绑到当前项目" width: Fit}
+                                    skills_disable := QuietButton{text: "在本项目禁用" width: Fit}
+                                    skills_unbind := DangerButton{text: "从本项目移除" width: Fit}
+                                }
+                                skill_dir := Field{empty_text: "本地技能目录，里面要有 SKILL.md"}
+                                skills_import := QuietButton{text: "校验并导入目录" width: Fit}
+                                skill_zip := Field{empty_text: "本地 ZIP 路径。会检查路径穿越，不执行里面的脚本"}
+                                skills_zip := QuietButton{text: "校验并导入 ZIP" width: Fit}
+                                skill_repo := Field{empty_text: "Octos 技能仓库，例如 user/repo"}
+                                skills_install := PrimaryButton{text: "请求 Octos 安装" width: Fit}
+                                skills_editor := View{
+                                    width: Fill height: Fit
+                                    flow: Down spacing: 8
+                                    visible: false
+                                    Section{text: "编辑 SKILL.md"}
+                                    skill_draft := Field{
+                                        height: 180
+                                        is_multiline: true
+                                        padding: Inset{left: 10.0 right: 10.0 top: 8.0 bottom: 8.0}
+                                        empty_text: "粘贴带 YAML 前言的 SKILL.md"
+                                        draw_text.max_lines: 16
+                                        draw_text.text_overflow: TextOverflow.Ellipsis
+                                    }
+                                    View{
+                                        width: Fill height: Fit
+                                        flow: Right spacing: 8
+                                        skills_template := QuietButton{text: "填入草稿模板" width: Fit}
+                                        skills_check := QuietButton{text: "只校验" width: Fit}
+                                        skills_publish := PrimaryButton{text: "校验后保存" width: Fit}
+                                    }
+                                }
+                            }
+                        }
+
+                        settings_pane := RoundedView{
+                            width: Fill height: Fill
+                            visible: false
+                            margin: 8
+                            padding: 16
+                            flow: Down spacing: 8
+                            draw_bg.color: #x07182C
+                            draw_bg.border_radius: 12.0
+                            draw_bg.border_size: 1.0
+                            draw_bg.border_color: #x145A78
+                            ScrollYView{
+                                width: Fill height: Fill
+                                flow: Down spacing: 10
+                                View{
+                                    width: Fill height: Fit
+                                    flow: Right spacing: 8
+                                    align: Align{y: 0.5}
+                                    Title{text: "设置"}
+                                    Filler{}
+                                    settings_close := DangerButton{text: "关闭" height: 28}
+                                }
+                                Muted{width: Fill height: Fit text: "同一件事只留一个按钮。Cursor Key、Bridge、LLM、Judge 和连接器都在这一页。"}
+                                Section{text: "Cursor"}
+                                cursor_key_line := Label{
+                                    width: Fill
+                                    text: ""
+                                    draw_text.color: #xE6F1FF
+                                    draw_text.text_style: theme.font_label{font_size: 13.0}
+                                }
+                                cursor_key := Field{empty_text: "Cursor API Key，保存后会清空，不会进对话"}
+                                View{
+                                    width: Fill height: Fit
+                                    flow: Right spacing: 8
+                                    save_cursor := PrimaryButton{text: "保存 Cursor Key"}
+                                    clear_cursor := DangerButton{text: "移除 Cursor Key"}
+                                }
+                                bridge_line := Label{
+                                    width: Fill
+                                    text: ""
+                                    draw_text.color: #xE6F1FF
+                                    draw_text.text_style: theme.font_label{font_size: 13.0}
+                                }
+                                reconnect_cursor := QuietButton{text: "重连 Bridge" width: Fit}
+                                Section{text: "LLM Provider"}
+                                llm_line := Label{
+                                    width: Fill
+                                    text: ""
+                                    draw_text.color: #xE6F1FF
+                                    draw_text.text_style: theme.font_label{font_size: 13.0}
+                                }
+                                llm_base := Field{empty_text: "http://127.0.0.1:11434/v1"}
+                                llm_model := Field{empty_text: "模型名，例如 qwen2.5-coder:7b"}
+                                save_llm := PrimaryButton{text: "设为主模型" width: Fit}
+                                Section{text: "Judge"}
+                                judge_line := Label{
+                                    width: Fill
+                                    text: ""
+                                    draw_text.color: #xE6F1FF
+                                    draw_text.text_style: theme.font_label{font_size: 13.0}
+                                }
+                                test_judge := QuietButton{text: "测试 Judge" width: Fit}
+                                Section{text: "ESP-IDF"}
+                                idf_line := Label{
+                                    width: Fill
+                                    text: ""
+                                    draw_text.color: #xE6F1FF
+                                    draw_text.text_style: theme.font_label{font_size: 13.0}
+                                }
+                                Section{text: "连接器"}
+                                Muted{width: Fill height: Fit text: "Cursor 按 GrokBot 的方式走官方 Bridge，不把订阅当成通用模型接口。换成 Cursor 或 Octos 仍用左侧 Agent Runtime，这里不再放第二组切换。WorkBuddy 只探测本机桥。"}
+                                workbuddy_line := Label{
+                                    width: Fill
+                                    text: ""
+                                    draw_text.color: #xE6F1FF
+                                    draw_text.text_style: theme.font_label{font_size: 13.0}
+                                }
+                                workbuddy_url := Field{empty_text: "http://127.0.0.1:3920"}
+                                probe_workbuddy := QuietButton{text: "探测 WorkBuddy" width: Fit}
+                            }
+                        }
+
+                        }
+                        }
                     }
                 }
             }
@@ -1062,6 +1440,14 @@ pub struct App {
     events: Option<mpsc::Receiver<Snapshot>>,
     #[rust(96.0)]
     composer_h: f64,
+    #[rust(128.0)]
+    goal_h: f64,
+    #[rust]
+    goal_drag: bool,
+    #[rust(128.0)]
+    goal_drag_h: f64,
+    #[rust(0.0)]
+    goal_drag_y: f64,
     #[rust]
     composer_drag: bool,
     #[rust(96.0)]
@@ -1081,9 +1467,21 @@ pub struct App {
     #[rust(true)]
     board_open: bool,
     #[rust]
+    mentor: Desk,
+    #[rust]
     transcript: String,
     #[rust]
+    board_status: String,
+    #[rust]
+    octos_line: String,
+    #[rust]
     board_log: String,
+    #[rust(true)]
+    fill_settings: bool,
+    #[rust(true)]
+    rail_open: bool,
+    #[rust]
+    nav: String,
 }
 
 #[derive(Script, ScriptHook, Widget)]
@@ -1243,6 +1641,8 @@ impl App {
             .widget(cx, ids!(task_list))
             .set_visible(cx, !no_tasks);
         self.board_log = snap.board_log.clone();
+        self.board_status = snap.board_status.clone();
+        self.octos_line = snap.octos_status.clone();
         board_view::set_board_visual(&snap.board_status);
         let board_log = self.ui.text_input(cx, ids!(board_log));
         if board_log.text() != snap.board_log {
@@ -1272,6 +1672,8 @@ impl App {
             .label(cx, ids!(detail_workspace))
             .set_text(cx, &snap.workspace);
         self.ui.label(cx, ids!(hint)).set_text(cx, &snap.hint);
+        self.mentor.note_log(&snap.board_log);
+        self.paint_mentor(cx, &snap.board_status, &snap.board_log, &snap.octos_status);
         let plan = if snap.plan.is_empty() {
             "还没有保存的计划。".to_string()
         } else {
@@ -1292,15 +1694,56 @@ impl App {
                 .label(cx, ids!(card_title))
                 .set_text(cx, &card.title);
             self.ui.label(cx, ids!(card_body)).set_text(cx, &card.body);
-            self.ui
-                .button(cx, ids!(card_primary))
-                .set_text(cx, &card.primary);
-            self.ui
-                .button(cx, ids!(card_secondary))
-                .set_text(cx, &card.secondary);
-            self.ui
-                .button(cx, ids!(card_dismiss))
-                .set_text(cx, &card.dismiss);
+            let shown = settings::shown_card_buttons([
+                card.primary.as_str(),
+                card.secondary.as_str(),
+                card.dismiss.as_str(),
+            ]);
+            for (id, text, on) in [
+                (ids!(card_primary), card.primary.as_str(), shown[0]),
+                (ids!(card_secondary), card.secondary.as_str(), shown[1]),
+                (ids!(card_dismiss), card.dismiss.as_str(), shown[2]),
+            ] {
+                self.ui.button(cx, id).set_visible(cx, on);
+                if on {
+                    self.ui.button(cx, id).set_text(cx, text);
+                }
+            }
+        }
+        self.ui
+            .label(cx, ids!(cursor_key_line))
+            .set_text(cx, &snap.cursor_key_line);
+        self.ui
+            .label(cx, ids!(bridge_line))
+            .set_text(cx, &snap.bridge_line);
+        self.ui.label(cx, ids!(llm_line)).set_text(cx, &snap.llm_line);
+        self.ui
+            .label(cx, ids!(judge_line))
+            .set_text(cx, &snap.judge_line);
+        self.ui.label(cx, ids!(idf_line)).set_text(cx, &snap.idf_line);
+        self.ui
+            .label(cx, ids!(workbuddy_line))
+            .set_text(cx, &snap.workbuddy_line);
+        self.ui
+            .label(cx, ids!(skills_body))
+            .set_text(cx, &snap.skills_page);
+        self.ui
+            .view(cx, ids!(skills_editor))
+            .set_visible(cx, snap.skills_tab == "mine");
+        if self.fill_settings {
+            let base = self.ui.text_input(cx, ids!(llm_base));
+            if base.text() != snap.llm_base {
+                base.set_text(cx, &snap.llm_base);
+            }
+            let model = self.ui.text_input(cx, ids!(llm_model));
+            if model.text() != snap.llm_model {
+                model.set_text(cx, &snap.llm_model);
+            }
+            let bridge = self.ui.text_input(cx, ids!(workbuddy_url));
+            if bridge.text() != snap.workbuddy_url {
+                bridge.set_text(cx, &snap.workbuddy_url);
+            }
+            self.fill_settings = false;
         }
         self.ui.redraw(cx);
     }
@@ -1373,19 +1816,214 @@ impl App {
         }
     }
 
-    fn show_nav(&self, cx: &mut Cx, which: &str) {
+    fn close_settings(&self, cx: &mut Cx) {
+        self.ui.view(cx, ids!(settings_pane)).set_visible(cx, false);
+        self.ui.view(cx, ids!(skills_pane)).set_visible(cx, false);
+        self.ui.view(cx, ids!(workbench)).set_visible(cx, true);
+    }
+
+    fn open_library(&mut self, cx: &mut Cx) {
+        self.ui.view(cx, ids!(settings_pane)).set_visible(cx, false);
+        self.ui.view(cx, ids!(studio)).set_visible(cx, false);
+        self.ui.view(cx, ids!(legacy)).set_visible(cx, false);
+        self.ui.view(cx, ids!(skills_pane)).set_visible(cx, true);
+        self.show_nav(cx, "library");
+        self.ui
+            .label(cx, ids!(nav_current))
+            .set_text(cx, "当前：技能库");
+        self.send(Cmd::RefreshSkills);
+    }
+
+    fn open_settings(&mut self, cx: &mut Cx) {
+        self.fill_settings = true;
+        self.ui.view(cx, ids!(skills_pane)).set_visible(cx, false);
+        self.ui.view(cx, ids!(studio)).set_visible(cx, false);
+        self.ui.view(cx, ids!(legacy)).set_visible(cx, false);
+        self.ui.view(cx, ids!(settings_pane)).set_visible(cx, true);
+        self.show_nav(cx, "plugins");
+        self.ui
+            .label(cx, ids!(nav_current))
+            .set_text(cx, "当前：设置");
+        self.send(Cmd::OpenSettings);
+    }
+
+    fn apply_rail(&mut self, cx: &mut Cx) {
+        let width = if self.rail_open { 196.0 } else { 52.0 };
+        set_view_size(cx, &self.ui, ids!(rail), Some(width), None);
+        self.ui.button(cx, ids!(rail_toggle)).set_text(
+            cx,
+            if self.rail_open { "收起导航" } else { "展开" },
+        );
+        self.ui
+            .view(cx, ids!(rail_foot))
+            .set_visible(cx, self.rail_open);
+        self.paint_nav(cx);
+    }
+
+    fn show_nav(&mut self, cx: &mut Cx, which: &str) {
+        self.nav = which.to_string();
+        self.paint_nav(cx);
+    }
+
+    fn paint_nav(&self, cx: &mut Cx) {
+        let which = self.nav.as_str();
         for (on_id, idle_id, selected) in [
             (ids!(nav_work), ids!(nav_work_idle), which == "work"),
             (ids!(nav_tasks), ids!(nav_tasks_idle), which == "tasks"),
+            (ids!(nav_mentor), ids!(nav_mentor_idle), which == "mentor"),
             (
                 ids!(nav_devices),
                 ids!(nav_devices_idle),
                 which == "devices",
             ),
+            (ids!(nav_scene), ids!(nav_scene_idle), which == "scene"),
+            (
+                ids!(nav_plugins),
+                ids!(nav_plugins_idle),
+                which == "plugins",
+            ),
+            (
+                ids!(nav_library),
+                ids!(nav_library_idle),
+                which == "library",
+            ),
         ] {
-            self.ui.widget(cx, on_id).set_visible(cx, selected);
-            self.ui.widget(cx, idle_id).set_visible(cx, !selected);
+            let show = self.rail_open && selected;
+            let show_idle = self.rail_open && !selected;
+            self.ui.widget(cx, on_id).set_visible(cx, show);
+            self.ui.widget(cx, idle_id).set_visible(cx, show_idle);
         }
+    }
+
+    fn show_studio(&self, cx: &mut Cx, on: bool) {
+        self.ui.view(cx, ids!(studio)).set_visible(cx, on);
+        self.ui.view(cx, ids!(legacy)).set_visible(cx, !on);
+    }
+
+    fn paint_mentor(&self, cx: &mut Cx, board_status: &str, log: &str, octos_status: &str) {
+        let face = self.mentor.face(board_status, log);
+        self.ui.view(cx, ids!(studio_home)).set_visible(cx, face.home);
+        self.ui
+            .view(cx, ids!(studio_project))
+            .set_visible(cx, !face.home);
+        self.ui.label(cx, ids!(h_board)).set_text(cx, board_status);
+        self.ui.label(cx, ids!(h_note)).set_text(cx, &face.note);
+        self.ui.label(cx, ids!(s_title)).set_text(cx, &face.title);
+        self.ui.label(cx, ids!(s_sub)).set_text(cx, &face.subtitle);
+        self.ui
+            .label(cx, ids!(s_step))
+            .set_text(cx, &face.step_label);
+        self.ui.label(cx, ids!(m_action)).set_text(cx, &face.action);
+        self.ui.label(cx, ids!(m_steps)).set_text(cx, &face.steps);
+        self.ui.label(cx, ids!(m_why)).set_text(cx, &face.why);
+        self.ui.label(cx, ids!(m_safety)).set_text(cx, &face.safety);
+        self.ui.label(cx, ids!(m_verify)).set_text(cx, &face.verify);
+        self.ui.label(cx, ids!(m_legend)).set_text(cx, &face.legend);
+        self.ui.label(cx, ids!(m_note)).set_text(cx, &face.note);
+        self.ui
+            .label(cx, ids!(s_evidence))
+            .set_text(cx, &face.evidence_note);
+        self.ui.label(cx, ids!(s_camera)).set_text(cx, &face.camera);
+        self.ui.label(cx, ids!(s_scene)).set_text(cx, &face.scene);
+        self.ui.label(cx, ids!(s_info)).set_text(cx, &face.info);
+        self.ui
+            .label(cx, ids!(s_temp))
+            .set_text(cx, &format!("温度  {}", face.temp));
+        self.ui
+            .label(cx, ids!(s_hum))
+            .set_text(cx, &format!("湿度  {}", face.humidity));
+        self.ui
+            .label(cx, ids!(s_wifi))
+            .set_text(cx, &format!("Wi-Fi  {}", face.wifi));
+        self.ui
+            .label(cx, ids!(s_gpio))
+            .set_text(cx, &format!("GPIO4  {}", face.gpio));
+        let serial = if log.trim().is_empty() {
+            "还没有串口或扫描记录。"
+        } else {
+            log
+        };
+        self.ui.label(cx, ids!(s_serial)).set_text(cx, serial);
+        self.ui.label(cx, ids!(s_legend)).set_text(cx, &face.legend);
+        let wire_ids = [ids!(wire_0), ids!(wire_1), ids!(wire_2)];
+        let prog_ids = [
+            ids!(prog_0),
+            ids!(prog_1),
+            ids!(prog_2),
+            ids!(prog_3),
+            ids!(prog_4),
+            ids!(prog_5),
+            ids!(prog_6),
+        ];
+        for (index, id) in wire_ids.iter().enumerate() {
+            let row = face.wires.get(index);
+            let text = if face.show_wiring {
+                row.map(|item| item.text.as_str()).unwrap_or("")
+            } else if face.home {
+                ""
+            } else {
+                "先确认串口，再看这根线"
+            };
+            self.ui.label(cx, *id).set_text(cx, text);
+            let current = row.is_some_and(|item| item.current);
+            self.ui.label(cx, *id).set_text_color(
+                cx,
+                if current {
+                    vec4(0.0, 0.85, 1.0, 1.0)
+                } else {
+                    vec4(0.90, 0.95, 1.0, 1.0)
+                },
+            );
+        }
+        for (index, id) in prog_ids.iter().enumerate() {
+            let text = face.phases.get(index).map(String::as_str).unwrap_or("");
+            self.ui.label(cx, *id).set_text(cx, text);
+        }
+        self.ui
+            .view(cx, ids!(wire_canvas))
+            .set_visible(cx, face.canvas == mentor::Canvas::Wiring);
+        self.ui
+            .view(cx, ids!(photo_canvas))
+            .set_visible(cx, face.canvas == mentor::Canvas::Camera);
+        self.ui
+            .view(cx, ids!(scene_canvas))
+            .set_visible(cx, face.canvas == mentor::Canvas::Scene);
+        let linked = !octos_status.contains("失败") && !octos_status.contains("没有");
+        self.ui.view(cx, ids!(mentor_dot)).set_visible(cx, true);
+        self.ui.label(cx, ids!(rail_link)).set_text(
+            cx,
+            if linked {
+                "导师连接见顶栏 Octos / Cursor"
+            } else {
+                "导师还没连上，顶栏会写原因"
+            },
+        );
+    }
+
+    fn repaint_mentor(&self, cx: &mut Cx) {
+        self.paint_mentor(cx, &self.board_status, &self.board_log, &self.octos_line);
+        self.ui.redraw(cx);
+    }
+
+    fn submit_goal(&mut self, cx: &mut Cx, text: String) {
+        let trimmed = text.trim();
+        if trimmed.is_empty() {
+            return;
+        }
+        let owned = trimmed.to_string();
+        self.ui.text_input(cx, ids!(goal)).set_text(cx, "");
+        if owned.contains("温湿度")
+            || owned.contains("湿度")
+            || owned.to_ascii_lowercase().contains("dht")
+        {
+            self.mentor.open_supported();
+        } else {
+            self.mentor.tell(
+                "这个目标还没有核对过的接线清单，已交给导师。不会假设引脚，也不会进入分步接线。",
+            );
+        }
+        self.send(Cmd::Send(owned));
+        self.repaint_mentor(cx);
     }
 }
 
@@ -1405,6 +2043,12 @@ impl MatchEvent for App {
             self.ui.button(cx, ids!(identify)).set_visible(cx, false);
             self.ui.button(cx, ids!(refresh)).set_visible(cx, false);
         }
+        self.ui
+            .text_input(cx, ids!(goal))
+            .set_height(cx, Size::Fixed(self.goal_h));
+        self.nav = "work".into();
+        self.apply_rail(cx);
+        self.paint_mentor(cx, "", "", "");
         self.ui.redraw(cx);
     }
 
@@ -1464,6 +2108,89 @@ impl MatchEvent for App {
         if self.ui.button(cx, ids!(identify)).clicked(actions) {
             self.send(Cmd::Identify);
         }
+        if self.ui.button(cx, ids!(studio_refresh)).clicked(actions) {
+            self.send(Cmd::RefreshDevices);
+        }
+        if let Some((text, _)) = self.ui.text_input(cx, ids!(goal)).returned(actions) {
+            self.submit_goal(cx, text);
+        }
+        if self.ui.button(cx, ids!(goal_send)).clicked(actions) {
+            let text = self.ui.text_input(cx, ids!(goal)).text();
+            self.submit_goal(cx, text);
+        }
+        if self.ui.button(cx, ids!(pick_dht)).clicked(actions) {
+            self.mentor.open_supported();
+            self.ui.text_input(cx, ids!(goal)).set_text(cx, "");
+            self.send(Cmd::Send(
+                "我想做一个 ESP32 温湿度监测器。请按已固定的接线问我：VCC 接 3V3，DATA 接 GPIO4，GND 接 GND，不要接 VIN。不要宣布已经烧录或已经读到温度。".into(),
+            ));
+            self.repaint_mentor(cx);
+        }
+        if self.ui.button(cx, ids!(pick_led)).clicked(actions) {
+            self.mentor.tell(mentor::Desk::unsupported("点亮 LED"));
+            self.repaint_mentor(cx);
+        }
+        if self.ui.button(cx, ids!(pick_pir)).clicked(actions) {
+            self.mentor.tell(mentor::Desk::unsupported("人体感应灯"));
+            self.repaint_mentor(cx);
+        }
+        if self.ui.button(cx, ids!(tab_wire)).clicked(actions) {
+            self.mentor.set_canvas(mentor::Canvas::Wiring);
+            self.repaint_mentor(cx);
+        }
+        if self.ui.button(cx, ids!(tab_photo)).clicked(actions) {
+            self.mentor.set_canvas(mentor::Canvas::Camera);
+            self.repaint_mentor(cx);
+        }
+        if self.ui.button(cx, ids!(tab_3d)).clicked(actions) {
+            self.mentor.set_canvas(mentor::Canvas::Scene);
+            self.repaint_mentor(cx);
+        }
+        if self.ui.button(cx, ids!(cam_on)).clicked(actions) {
+            self.mentor.set_camera(true);
+            self.repaint_mentor(cx);
+        }
+        if self.ui.button(cx, ids!(cam_off)).clicked(actions) {
+            self.mentor.set_camera(false);
+            self.repaint_mentor(cx);
+        }
+        if self.ui.button(cx, ids!(check_wires)).clicked(actions) {
+            let report = self.mentor.check_report(&self.board_status);
+            self.mentor.tell(report);
+            self.repaint_mentor(cx);
+        }
+        if self.ui.button(cx, ids!(hand_code)).clicked(actions) {
+            match self.mentor.code_prompt() {
+                Ok(prompt) => {
+                    self.send(Cmd::Send(prompt));
+                    self.repaint_mentor(cx);
+                }
+                Err(reason) => {
+                    self.mentor.tell(reason);
+                    self.repaint_mentor(cx);
+                }
+            }
+        }
+        if self.ui.button(cx, ids!(prep_deploy)).clicked(actions) {
+            match self.mentor.deploy_gate() {
+                Ok(()) => self.send(Cmd::OpenFlash),
+                Err(reason) => {
+                    self.mentor.tell(reason);
+                    self.repaint_mentor(cx);
+                }
+            }
+        }
+        if self.ui.button(cx, ids!(mentor_done)).clicked(actions) {
+            let outcome = self.mentor.confirm(&self.board_status, &self.board_log);
+            let detail = match outcome {
+                mentor::Confirm::Moved(text) | mentor::Confirm::Stay(text) => text,
+            };
+            self.ui.label(cx, ids!(hint)).set_text(cx, &detail);
+            self.repaint_mentor(cx);
+        }
+        if self.ui.button(cx, ids!(mentor_help)).clicked(actions) {
+            self.send(Cmd::Send(self.mentor.help_prompt()));
+        }
         if let Some(text) = self.ui.text_input(cx, ids!(search)).changed(actions) {
             if !text.trim().is_empty() {
                 self.ui.text_input(cx, ids!(search)).set_text(cx, "");
@@ -1472,19 +2199,23 @@ impl MatchEvent for App {
                     .set_text(cx, "搜索还没有接入，不会过滤任务或文件。");
             }
         }
+        if self.ui.button(cx, ids!(rail_toggle)).clicked(actions) {
+            self.rail_open = !self.rail_open;
+            self.apply_rail(cx);
+        }
         if self.ui.button(cx, ids!(nav_work)).clicked(actions)
             || self.ui.button(cx, ids!(nav_work_idle)).clicked(actions)
+            || self.ui.button(cx, ids!(settings_close)).clicked(actions)
         {
-            self.ui.view(cx, ids!(task_pane)).set_visible(cx, true);
-            self.ui.view(cx, ids!(chat_pane)).set_visible(cx, true);
-            self.ui
-                .view(cx, ids!(board_body))
-                .set_visible(cx, self.board_open);
+            self.close_settings(cx);
+            self.mentor.show_workbench();
+            self.show_studio(cx, true);
             self.show_nav(cx, "work");
             self.sync_column_grips(cx);
             self.ui
                 .label(cx, ids!(nav_current))
-                .set_text(cx, "当前：工作台");
+                .set_text(cx, "当前：工作台 · 目标与接线");
+            self.repaint_mentor(cx);
         }
         if self.ui.button(cx, ids!(attach)).clicked(actions) {
             self.ui
@@ -1494,35 +2225,181 @@ impl MatchEvent for App {
         if self.ui.button(cx, ids!(nav_tasks)).clicked(actions)
             || self.ui.button(cx, ids!(nav_tasks_idle)).clicked(actions)
         {
+            self.close_settings(cx);
+            self.show_studio(cx, false);
             self.ui.view(cx, ids!(task_pane)).set_visible(cx, true);
             self.ui.view(cx, ids!(chat_pane)).set_visible(cx, true);
-            self.ui.view(cx, ids!(board_body)).set_visible(cx, false);
+            self.ui.view(cx, ids!(board_body)).set_visible(cx, true);
+            self.board_open = true;
             self.show_nav(cx, "tasks");
             self.sync_column_grips(cx);
             self.ui
                 .label(cx, ids!(nav_current))
-                .set_text(cx, "当前：任务");
+                .set_text(cx, "当前：我的项目 · 目录与任务，右侧是设备");
+        }
+        if self.ui.button(cx, ids!(nav_mentor)).clicked(actions)
+            || self.ui.button(cx, ids!(nav_mentor_idle)).clicked(actions)
+        {
+            self.close_settings(cx);
+            self.show_studio(cx, false);
+            self.ui.view(cx, ids!(task_pane)).set_visible(cx, false);
+            self.ui.view(cx, ids!(chat_pane)).set_visible(cx, true);
+            self.ui.view(cx, ids!(board_body)).set_visible(cx, true);
+            self.board_open = true;
+            self.show_nav(cx, "mentor");
+            self.sync_column_grips(cx);
+            self.ui
+                .label(cx, ids!(nav_current))
+                .set_text(cx, "当前：AI 导师 · 对话，右侧是设备，不含项目目录");
         }
         if self.ui.button(cx, ids!(nav_devices)).clicked(actions)
             || self.ui.button(cx, ids!(nav_devices_idle)).clicked(actions)
         {
+            self.close_settings(cx);
+            self.show_studio(cx, false);
+            self.ui.view(cx, ids!(task_pane)).set_visible(cx, false);
             self.ui.view(cx, ids!(board_body)).set_visible(cx, true);
             self.ui.view(cx, ids!(chat_pane)).set_visible(cx, false);
+            self.board_open = true;
             self.show_nav(cx, "devices");
             self.sync_column_grips(cx);
             self.ui
                 .label(cx, ids!(nav_current))
-                .set_text(cx, "当前：设备");
+                .set_text(cx, "当前：设备与硬件 · 串口日志和三维小窗");
+        }
+        if self.ui.button(cx, ids!(nav_scene)).clicked(actions)
+            || self.ui.button(cx, ids!(nav_scene_idle)).clicked(actions)
+        {
+            self.close_settings(cx);
+            self.mentor.show_scene();
+            self.show_studio(cx, true);
+            self.show_nav(cx, "scene");
+            self.ui
+                .label(cx, ids!(nav_current))
+                .set_text(cx, "当前：三维调试 · 示意图");
+            self.repaint_mentor(cx);
         }
         if self.ui.button(cx, ids!(nav_library)).clicked(actions)
-            || self.ui.button(cx, ids!(nav_plugins)).clicked(actions)
+            || self.ui.button(cx, ids!(nav_library_idle)).clicked(actions)
         {
-            self.ui
-                .label(cx, ids!(hint))
-                .set_text(cx, "知识库和插件还没有接入，没有可打开的页面。");
+            self.open_library(cx);
         }
-        if self.ui.button(cx, ids!(settings)).clicked(actions) {
-            self.send(Cmd::OpenSettings);
+        if self.ui.button(cx, ids!(skills_close)).clicked(actions) {
+            self.close_settings(cx);
+            self.show_studio(cx, true);
+            self.show_nav(cx, "work");
+            self.ui
+                .label(cx, ids!(nav_current))
+                .set_text(cx, "当前：工作台");
+        }
+        if self.ui.button(cx, ids!(skills_tab_market)).clicked(actions) {
+            self.send(Cmd::SkillsTab("market".into()));
+        }
+        if self.ui.button(cx, ids!(skills_tab_installed)).clicked(actions) {
+            self.send(Cmd::SkillsTab("installed".into()));
+        }
+        if self.ui.button(cx, ids!(skills_tab_mine)).clicked(actions) {
+            self.send(Cmd::SkillsTab("mine".into()));
+        }
+        if self.ui.button(cx, ids!(skills_tab_project)).clicked(actions) {
+            self.send(Cmd::SkillsTab("project".into()));
+        }
+        if self.ui.button(cx, ids!(skills_tab_records)).clicked(actions) {
+            self.send(Cmd::SkillsTab("records".into()));
+        }
+        if self.ui.button(cx, ids!(skills_filter)).clicked(actions) {
+            let query = self.ui.text_input(cx, ids!(skill_query)).text();
+            self.send(Cmd::FilterSkills(query));
+        }
+        if self.ui.button(cx, ids!(skills_refresh)).clicked(actions) {
+            self.send(Cmd::RefreshSkills);
+        }
+        if self.ui.button(cx, ids!(skills_actions)).clicked(actions) {
+            self.send(Cmd::ListSkillActions);
+        }
+        if self.ui.button(cx, ids!(skills_bind)).clicked(actions) {
+            let name = self.ui.text_input(cx, ids!(skill_name)).text();
+            let name = if name.trim().is_empty() {
+                "esp32-wiring-guide".into()
+            } else {
+                name
+            };
+            self.send(Cmd::BindSkill(name));
+        }
+        if self.ui.button(cx, ids!(skills_disable)).clicked(actions) {
+            let name = self.ui.text_input(cx, ids!(skill_name)).text();
+            self.send(Cmd::DisableSkill(name));
+        }
+        if self.ui.button(cx, ids!(skills_unbind)).clicked(actions) {
+            let name = self.ui.text_input(cx, ids!(skill_name)).text();
+            let name = if name.trim().is_empty() {
+                "esp32-wiring-guide".into()
+            } else {
+                name
+            };
+            self.send(Cmd::UnbindSkill(name));
+        }
+        if self.ui.button(cx, ids!(skills_import)).clicked(actions) {
+            let path = self.ui.text_input(cx, ids!(skill_dir)).text();
+            self.send(Cmd::ImportSkillDir(path));
+        }
+        if self.ui.button(cx, ids!(skills_zip)).clicked(actions) {
+            let path = self.ui.text_input(cx, ids!(skill_zip)).text();
+            self.send(Cmd::ImportSkillZip(path));
+        }
+        if self.ui.button(cx, ids!(skills_install)).clicked(actions) {
+            let repo = self.ui.text_input(cx, ids!(skill_repo)).text();
+            self.send(Cmd::InstallSkillRepo(repo));
+        }
+        if self.ui.button(cx, ids!(skills_template)).clicked(actions) {
+            self.ui.text_input(cx, ids!(skill_draft)).set_text(
+                cx,
+                "---\nname: my-esp32-note\ndescription: 我核对过的接线备忘\nmetadata:\n  author: livstyle\n  version: \"0.1.0\"\n  boards: esp32\n  tools: board-profile\n  risk: low\n---\n只写已经核对过的接线。这段文字不能授权烧录。\n",
+            );
+        }
+        if self.ui.button(cx, ids!(skills_check)).clicked(actions) {
+            let content = self.ui.text_input(cx, ids!(skill_draft)).text();
+            self.send(Cmd::CheckDraft(content));
+        }
+        if self.ui.button(cx, ids!(skills_publish)).clicked(actions) {
+            let content = self.ui.text_input(cx, ids!(skill_draft)).text();
+            self.send(Cmd::PublishDraft(content));
+        }
+        if self.ui.button(cx, ids!(nav_plugins)).clicked(actions)
+            || self.ui.button(cx, ids!(nav_plugins_idle)).clicked(actions)
+            || self.ui.button(cx, ids!(settings)).clicked(actions)
+        {
+            self.open_settings(cx);
+        }
+        if self.ui.button(cx, ids!(save_cursor)).clicked(actions) {
+            let key = self.ui.text_input(cx, ids!(cursor_key)).text();
+            if key.trim().is_empty() {
+                self.ui
+                    .label(cx, ids!(hint))
+                    .set_text(cx, "先在设置里填 Cursor API Key。");
+            } else {
+                self.ui.text_input(cx, ids!(cursor_key)).set_text(cx, "");
+                self.send(Cmd::SaveCursorKey(key));
+            }
+        }
+        if self.ui.button(cx, ids!(clear_cursor)).clicked(actions) {
+            self.ui.text_input(cx, ids!(cursor_key)).set_text(cx, "");
+            self.send(Cmd::RemoveCursorKey);
+        }
+        if self.ui.button(cx, ids!(reconnect_cursor)).clicked(actions) {
+            self.send(Cmd::ReconnectCursor);
+        }
+        if self.ui.button(cx, ids!(save_llm)).clicked(actions) {
+            let base = self.ui.text_input(cx, ids!(llm_base)).text();
+            let model = self.ui.text_input(cx, ids!(llm_model)).text();
+            self.send(Cmd::SaveLlm { base, model });
+        }
+        if self.ui.button(cx, ids!(test_judge)).clicked(actions) {
+            self.send(Cmd::TestJudge);
+        }
+        if self.ui.button(cx, ids!(probe_workbuddy)).clicked(actions) {
+            let url = self.ui.text_input(cx, ids!(workbuddy_url)).text();
+            self.send(Cmd::ProbeWorkbuddy(url));
         }
         if self.ui.button(cx, ids!(use_cursor)).clicked(actions) {
             self.send(Cmd::UseAgent(CodeAgent::Cursor));
@@ -1579,6 +2456,23 @@ impl AppMain for App {
             self.on_window_width(cx, width);
         }
         self.handle_column_grips(cx, event);
+        let goal_grip = self.ui.view(cx, ids!(goal_grip)).area();
+        match event.hits(cx, goal_grip) {
+            Hit::FingerDown(e) => {
+                self.goal_drag = true;
+                self.goal_drag_y = e.abs.y;
+                self.goal_drag_h = self.goal_h;
+            }
+            Hit::FingerUp(_) => self.goal_drag = false,
+            Hit::FingerMove(e) if self.goal_drag => {
+                self.goal_h = (self.goal_drag_h + (e.abs.y - self.goal_drag_y)).clamp(88.0, 420.0);
+                self.ui
+                    .text_input(cx, ids!(goal))
+                    .set_height(cx, Size::Fixed(self.goal_h));
+                self.ui.redraw(cx);
+            }
+            _ => {}
+        }
         let grip = self.ui.view(cx, ids!(composer_grip)).area();
         match event.hits(cx, grip) {
             Hit::FingerDown(e) => {

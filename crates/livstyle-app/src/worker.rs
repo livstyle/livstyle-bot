@@ -7,18 +7,21 @@ use std::time::{Duration, Instant};
 
 use livstyle_core::Service;
 use livstyle_cursor::{
-    account_status_line, locate_bridge, runtime_caps, Bridge, BridgeConfig, CursorClient, RunEvent,
-    VersionInfo,
+    account_status_line, locate_bridge, runtime_caps, Bridge, BridgeConfig, CursorClient,
+    PINNED_BRIDGE_VERSION, RunEvent, VersionInfo,
 };
 use livstyle_domain::TaskStatus;
 use livstyle_esp::identify_chip;
-use livstyle_http::{send as http_send, Url};
+use livstyle_esp::toolchain::InstallSource;
+use livstyle_http::{send as http_send, Request, Url};
 use livstyle_octos::{OctosClient, ServerCaps};
+use livstyle_skills::Library;
 use livstyle_secrets::{CredentialStore, Secret, CURSOR_API_KEY};
 use livstyle_steering::{Action, Resolution, RuleJudge, RuntimeCaps, Stage};
 use makepad_widgets::makepad_platform::thread::SignalToUI;
 use serde_json::Value;
 
+use crate::settings::{self, ProductSettings};
 use crate::turns::{
     busy_text, cancel_effect, cursor_agent_choice, cursor_beats, octos_beats, plan_switch,
     session_align, BusyText, CancelEffect, CodeAgent, CursorAgentChoice, SessionAlign, SwitchPlan,
@@ -39,12 +42,30 @@ pub enum Cmd {
     RefreshDevices,
     Identify,
     OpenSettings,
+    SaveCursorKey(String),
+    RemoveCursorKey,
+    ReconnectCursor,
+    SaveLlm { base: String, model: String },
+    TestJudge,
+    ProbeWorkbuddy(String),
     OpenFlash,
     OpenUnknown,
     Primary,
     Secondary,
     Dismiss,
     UseAgent(CodeAgent),
+    RefreshSkills,
+    ImportSkillDir(String),
+    InstallSkillRepo(String),
+    UnbindSkill(String),
+    SkillsTab(String),
+    FilterSkills(String),
+    CheckDraft(String),
+    PublishDraft(String),
+    ImportSkillZip(String),
+    BindSkill(String),
+    DisableSkill(String),
+    ListSkillActions,
 }
 
 #[derive(Clone, Debug)]
@@ -87,6 +108,17 @@ pub struct Snapshot {
     pub plan: String,
     pub hint: String,
     pub card: Option<Card>,
+    pub cursor_key_line: String,
+    pub bridge_line: String,
+    pub llm_line: String,
+    pub llm_base: String,
+    pub llm_model: String,
+    pub judge_line: String,
+    pub idf_line: String,
+    pub workbuddy_line: String,
+    pub workbuddy_url: String,
+    pub skills_page: String,
+    pub skills_tab: String,
 }
 
 struct State {
@@ -119,6 +151,21 @@ struct State {
     busy: bool,
     followups: VecDeque<String>,
     deferred: Vec<Cmd>,
+    llm_base: String,
+    llm_model: String,
+    judge_line: String,
+    workbuddy_url: String,
+    workbuddy_line: String,
+    cursor_key_line: String,
+    bridge_line: String,
+    llm_line: String,
+    idf_line: String,
+    skills: Library,
+    octos_methods: Vec<String>,
+    skills_page: String,
+    skills_tab: String,
+    skills_query: String,
+    skills_note: String,
 }
 
 struct CursorLink {
@@ -145,6 +192,7 @@ pub fn run(rx: Receiver<Cmd>, tx: Sender<Snapshot>) {
         seed(&mut svc);
     }
     let workspace = load_workspace();
+    let saved = settings::load_product_settings(&settings_path());
     let mut state = State {
         svc,
         tx: tx.clone(),
@@ -175,7 +223,24 @@ pub fn run(rx: Receiver<Cmd>, tx: Sender<Snapshot>) {
         busy: false,
         followups: VecDeque::new(),
         deferred: Vec::new(),
+        llm_base: saved.llm_base,
+        llm_model: saved.llm_model,
+        judge_line: String::new(),
+        workbuddy_url: saved.workbuddy_url,
+        workbuddy_line: String::new(),
+        cursor_key_line: String::new(),
+        bridge_line: String::new(),
+        llm_line: String::new(),
+        idf_line: String::new(),
+        skills: Library::open(data_dir().join("skills")).expect("skills dir"),
+        octos_methods: Vec::new(),
+        skills_page: String::new(),
+        skills_tab: "market".into(),
+        skills_query: String::new(),
+        skills_note: "还没有向 Octos 查询安装列表。内置技能不是已安装状态。".into(),
     };
+    state.refresh_settings_lines();
+    state.refresh_skills_page();
     if let Some(id) = state
         .svc
         .task_ids()
@@ -216,6 +281,17 @@ fn empty_snapshot(hint: &str) -> Snapshot {
         plan: String::new(),
         hint: hint.into(),
         card: None,
+        cursor_key_line: String::new(),
+        bridge_line: String::new(),
+        llm_line: String::new(),
+        llm_base: String::new(),
+        llm_model: String::new(),
+        judge_line: String::new(),
+        idf_line: String::new(),
+        workbuddy_line: String::new(),
+        workbuddy_url: String::new(),
+        skills_page: "技能库还没有刷新。".into(),
+        skills_tab: "market".into(),
     }
 }
 
@@ -234,7 +310,18 @@ impl State {
             Cmd::BrowseWorkspace => self.browse_workspace(),
             Cmd::RefreshDevices => self.refresh_boards(),
             Cmd::Identify => self.ask_identify(),
-            Cmd::OpenSettings => self.card = Some(settings_card()),
+            Cmd::OpenSettings => {
+                if self.card.as_ref().is_some_and(|card| card.kind == CardKind::Settings) {
+                    self.card = None;
+                }
+                self.refresh_settings_lines();
+            }
+            Cmd::SaveCursorKey(key) => self.save_cursor_key(key),
+            Cmd::RemoveCursorKey => self.remove_cursor_key(),
+            Cmd::ReconnectCursor => self.reconnect_cursor(),
+            Cmd::SaveLlm { base, model } => self.save_llm(base, model),
+            Cmd::TestJudge => self.test_judge(),
+            Cmd::ProbeWorkbuddy(url) => self.probe_workbuddy(url),
             Cmd::OpenFlash => self.open_flash(),
             Cmd::OpenUnknown => self.card = Some(unknown_card()),
             Cmd::Primary => self.primary(),
@@ -246,6 +333,25 @@ impl State {
                 self.card = None;
                 self.hint = "已取消这次确认。".into();
             }
+            Cmd::RefreshSkills => self.refresh_skills_from_host(),
+            Cmd::ImportSkillDir(path) => self.import_skill_dir(path),
+            Cmd::InstallSkillRepo(repo) => self.install_skill_repo(repo),
+            Cmd::UnbindSkill(name) => self.unbind_skill(&name),
+            Cmd::SkillsTab(tab) => {
+                self.skills_tab = tab;
+                self.refresh_skills_page();
+            }
+            Cmd::FilterSkills(query) => {
+                self.skills_query = query;
+                self.skills_tab = "market".into();
+                self.refresh_skills_page();
+            }
+            Cmd::CheckDraft(content) => self.check_draft(content),
+            Cmd::PublishDraft(content) => self.publish_draft(content),
+            Cmd::ImportSkillZip(path) => self.import_skill_zip(path),
+            Cmd::BindSkill(name) => self.bind_skill(&name),
+            Cmd::DisableSkill(name) => self.disable_skill(&name),
+            Cmd::ListSkillActions => self.list_skill_actions(),
         }
     }
 
@@ -341,7 +447,7 @@ impl State {
         self.board_status = board_line();
         self.note_board(scan_reply());
         self.say(format!(
-            "livstyle：当前用 {} 写代码。连接器里可以换成另一个，这一轮结束后生效。",
+            "livstyle：当前用 {} 写代码。要换成 Cursor 或 Octos，用左侧 Agent Runtime，这一轮结束后生效。",
             self.agent.label()
         ));
         let snap = self.snapshot();
@@ -375,10 +481,311 @@ impl State {
             self.say("livstyle：这句话取消了任务，没有开始新的一轮。".into());
             return;
         }
+        let guided = self.with_skills(text);
         match self.agent {
-            CodeAgent::Cursor => self.ask_cursor(text, rx),
-            CodeAgent::Octos => self.ask_octos(text, rx),
+            CodeAgent::Cursor => self.ask_cursor(&guided, rx),
+            CodeAgent::Octos => self.ask_octos(&guided, rx),
         }
+    }
+
+    fn with_skills(&mut self, text: &str) -> String {
+        if self.selected.is_empty() {
+            return text.to_string();
+        }
+        let tools = vec!["board-profile".into(), "esp-idf".into(), "serial-log".into(), "device-runner".into()];
+        match self.skills.load_for_turn(
+            &self.selected,
+            &self.selected,
+            text,
+            self.chip.as_deref(),
+            &tools,
+            self.busy,
+        ) {
+            Ok(load) if !load.guidance.is_empty() => {
+                self.hint = format!(
+                    "本轮选用 {} 个技能。技能正文没有放开工具或烧录权限。",
+                    load.used.len()
+                );
+                self.skills_note = "技能已按项目绑定选用。".into();
+                self.refresh_skills_page();
+                format!("{text}\n\n{}", load.guidance)
+            }
+            Ok(_) => text.to_string(),
+            Err(err) => {
+                self.hint = err.to_string();
+                text.to_string()
+            }
+        }
+    }
+
+    fn refresh_skills_from_host(&mut self) {
+        let note = if self.octos.is_none() {
+            "Octos 没连上。内置技能只是目录，没有被记成已安装。".to_string()
+        } else if !self
+            .octos_methods
+            .iter()
+            .any(|method| method == "profile/skills/list")
+        {
+            livstyle_skills::SkillError::MethodMissing("profile/skills/list".into()).to_string()
+        } else {
+            let listed = self
+                .octos
+                .as_ref()
+                .expect("octos")
+                .request("profile/skills/list", serde_json::json!({}));
+            match listed {
+                Ok(value) => {
+                    let names = value
+                        .get("skills")
+                        .and_then(|item| item.as_array())
+                        .map(|items| {
+                            items
+                                .iter()
+                                .filter_map(|item| {
+                                    item.get("name").and_then(|name| name.as_str()).map(str::to_string)
+                                })
+                                .collect::<Vec<_>>()
+                        })
+                        .unwrap_or_default();
+                    let count = names.len();
+                    if let Err(err) = self.skills.remember_host(&names) {
+                        err.to_string()
+                    } else {
+                        format!("Octos profile/skills/list 返回 {count} 个已安装技能。")
+                    }
+                }
+                Err(err) => err.to_string(),
+            }
+        };
+        self.skills_note = note;
+        self.refresh_skills_page();
+    }
+
+    fn refresh_skills_page(&mut self) {
+        self.skills_page = self
+            .skills
+            .section(
+                &self.skills_tab,
+                &self.selected,
+                &self.skills_query,
+                &self.skills_note,
+            )
+            .unwrap_or_else(|err| err.to_string());
+    }
+
+    fn import_skill_dir(&mut self, path: String) {
+        let path = path.trim();
+        if path.is_empty() {
+            self.hint = "先填写要导入的技能目录。".into();
+            return;
+        }
+        match self.skills.import_dir(std::path::Path::new(path)) {
+            Ok(record) => {
+                self.hint = format!(
+                    "已把 {} 拷到本地技能库。没有执行 scripts，也没有调用 Octos 安装。",
+                    record.name
+                );
+            }
+            Err(err) => self.hint = err.to_string(),
+        }
+        self.skills_tab = "installed".into();
+        self.skills_note = self.hint.clone();
+        self.refresh_skills_page();
+    }
+
+    fn import_skill_zip(&mut self, path: String) {
+        let path = path.trim();
+        if path.is_empty() {
+            self.hint = "先填写 ZIP 文件路径。".into();
+            return;
+        }
+        let bytes = match std::fs::read(path) {
+            Ok(bytes) => bytes,
+            Err(err) => {
+                self.hint = format!("读不到 ZIP：{err}");
+                self.refresh_skills_page();
+                return;
+            }
+        };
+        match self.skills.import_zip(&bytes) {
+            Ok(record) => {
+                self.hint = format!(
+                    "已校验并导入 {}。压缩包里的 scripts 没有执行。",
+                    record.name
+                );
+                self.skills_tab = "installed".into();
+            }
+            Err(err) => self.hint = err.to_string(),
+        }
+        self.skills_note = self.hint.clone();
+        self.refresh_skills_page();
+    }
+
+    fn check_draft(&mut self, content: String) {
+        match livstyle_skills::inspect_markdown(&content) {
+            Ok(parsed) => {
+                self.hint = format!(
+                    "校验通过：{} {}。告警 {} 条。还没有保存，也没有执行附件。",
+                    parsed.record.name,
+                    parsed.record.version,
+                    parsed.warnings.len()
+                );
+            }
+            Err(err) => self.hint = format!("校验没通过：{err}"),
+        }
+    }
+
+    fn publish_draft(&mut self, content: String) {
+        match self.skills.publish_draft(&content) {
+            Ok(record) => {
+                self.hint = format!(
+                    "已保存个人技能 {}。这不是 Octos 安装，也没有获得烧录权限。",
+                    record.name
+                );
+                self.skills_tab = "mine".into();
+            }
+            Err(err) => self.hint = format!("没有保存：{err}"),
+        }
+        self.skills_note = self.hint.clone();
+        self.refresh_skills_page();
+    }
+
+    fn install_skill_repo(&mut self, repo: String) {
+        let repo = repo.trim();
+        if repo.is_empty() {
+            self.hint = "先填写 Octos 技能仓库地址。".into();
+            return;
+        }
+        if self.octos.is_none() {
+            self.hint = "Octos 没连上，不能调用 profile/skills/install。".into();
+            self.skills_note = self.hint.clone();
+            self.refresh_skills_page();
+            return;
+        }
+        if !self
+            .octos_methods
+            .iter()
+            .any(|method| method == "profile/skills/install")
+        {
+            self.hint = livstyle_skills::SkillError::MethodMissing("profile/skills/install".into())
+                .to_string();
+            self.skills_note = self.hint.clone();
+            self.refresh_skills_page();
+            return;
+        }
+        match self.octos.as_ref().expect("octos").request(
+            "profile/skills/install",
+            serde_json::json!({ "repo": repo }),
+        ) {
+            Ok(_) => {
+                self.hint = "Octos 已接受安装请求，正在按 profile/skills/list 回读。".into();
+                self.refresh_skills_from_host();
+            }
+            Err(err) => {
+                self.hint = err.to_string();
+                self.skills_note = self.hint.clone();
+                self.refresh_skills_page();
+            }
+        }
+    }
+
+    fn list_skill_actions(&mut self) {
+        if self.octos.is_none()
+            || !self
+                .octos_methods
+                .iter()
+                .any(|method| method == "skill/action/list")
+        {
+            self.hint = livstyle_skills::SkillError::MethodMissing("skill/action/list".into()).to_string();
+            self.skills_note = self.hint.clone();
+            self.refresh_skills_page();
+            return;
+        }
+        match self
+            .octos
+            .as_ref()
+            .expect("octos")
+            .request("skill/action/list", serde_json::json!({}))
+        {
+            Ok(value) => {
+                let text = serde_json::to_string_pretty(&value).unwrap_or_else(|_| value.to_string());
+                let text = text.chars().take(2000).collect::<String>();
+                self.skills_note = format!("skill/action/list 的返回：\n{text}");
+                self.hint = "已读取动作列表。没有调用 skill/action/invoke。".into();
+            }
+            Err(err) => {
+                self.hint = err.to_string();
+                self.skills_note = self.hint.clone();
+            }
+        }
+        self.skills_tab = "installed".into();
+        self.refresh_skills_page();
+    }
+
+    fn bind_skill(&mut self, name: &str) {
+        if self.selected.is_empty() {
+            self.hint = "先在我的项目里选中一个任务，再绑定技能。".into();
+            return;
+        }
+        let name = name.trim();
+        if name.is_empty() {
+            self.hint = "先填写要绑定的技能名。".into();
+            return;
+        }
+        let tools = [
+            "board-profile".into(),
+            "esp-idf".into(),
+            "serial-log".into(),
+            "device-runner".into(),
+        ];
+        match self.skills.bind(
+            &self.selected,
+            name,
+            "user",
+            self.chip.as_deref(),
+            &tools,
+        ) {
+            Ok(binding) => {
+                self.hint = format!(
+                    "已把 {}@{} 绑到 {}。这不是 Octos 安装。",
+                    binding.skill_id, binding.pinned_version, binding.project_id
+                );
+            }
+            Err(err) => self.hint = err.to_string(),
+        }
+        self.skills_tab = "project".into();
+        self.skills_note = self.hint.clone();
+        self.refresh_skills_page();
+    }
+
+    fn unbind_skill(&mut self, name: &str) {
+        if self.selected.is_empty() {
+            self.hint = "没有选中的项目。".into();
+            return;
+        }
+        let name = name.trim();
+        match self.skills.unbind(&self.selected, name) {
+            Ok(()) => self.hint = format!("已从当前项目移除 {name}。"),
+            Err(err) => self.hint = err.to_string(),
+        }
+        self.skills_tab = "project".into();
+        self.skills_note = self.hint.clone();
+        self.refresh_skills_page();
+    }
+
+    fn disable_skill(&mut self, name: &str) {
+        if self.selected.is_empty() {
+            self.hint = "没有选中的项目。".into();
+            return;
+        }
+        let name = name.trim();
+        match self.skills.set_enabled(&self.selected, name, false) {
+            Ok(()) => self.hint = format!("已禁用 {name}。下一轮不会再选用它。"),
+            Err(err) => self.hint = err.to_string(),
+        }
+        self.skills_tab = "project".into();
+        self.skills_note = self.hint.clone();
+        self.refresh_skills_page();
     }
 
     fn record_intervention(&mut self, text: &str) -> bool {
@@ -627,7 +1034,9 @@ impl State {
                     "Octos：已连接 {}。steer={}。之后的对话发给这个 agent，不再只做启动探测。",
                     hello.server_version, caps.steer
                 ));
+                self.octos_methods = hello.methods.clone();
                 self.octos = Some(client);
+                self.refresh_skills_from_host();
                 self.ensure_session();
             }
             Err(err) => {
@@ -690,17 +1099,25 @@ impl State {
     }
 
     fn bind_local_model(&mut self, profile: &str, session: &str, cwd: &str) -> bool {
-        let model = match pick_ollama_model() {
-            Ok(model) => model,
-            Err(err) => {
-                self.octos_status = "Octos  还没有可用模型".into();
-                self.say(format!("Octos：profile 还没有 LLM。{err}"));
-                return false;
+        let (family, model, base) = if let Some(saved) = self.saved_llm() {
+            saved
+        } else {
+            match pick_ollama_model() {
+                Ok(model) => (
+                    "ollama".to_string(),
+                    model,
+                    "http://127.0.0.1:11434/v1".to_string(),
+                ),
+                Err(err) => {
+                    self.octos_status = "Octos  还没有可用模型".into();
+                    self.say(format!("Octos：profile 还没有 LLM。{err}"));
+                    return false;
+                }
             }
         };
         let upserted = self.octos.as_ref().and_then(|client| {
             client
-                .upsert_primary_llm(profile, "ollama", &model, "http://127.0.0.1:11434/v1")
+                .upsert_primary_llm(profile, &family, &model, &base)
                 .err()
         });
         if let Some(err) = upserted {
@@ -710,7 +1127,7 @@ impl State {
             return false;
         }
         self.say(format!(
-            "Octos：profile livstyle 的主模型设为 Ollama {model}。这个大小能放进当前内存。"
+            "Octos：profile livstyle 的主模型设为 {family} {model}。"
         ));
         let open_err = self
             .octos
@@ -1519,7 +1936,203 @@ impl State {
             plan: self.plan.clone(),
             hint: self.hint.clone(),
             card: self.card.clone(),
+            cursor_key_line: self.cursor_key_line.clone(),
+            bridge_line: self.bridge_line.clone(),
+            llm_line: self.llm_line.clone(),
+            llm_base: self.llm_base.clone(),
+            llm_model: self.llm_model.clone(),
+            judge_line: self.judge_line.clone(),
+            idf_line: self.idf_line.clone(),
+            workbuddy_line: self.workbuddy_line.clone(),
+            workbuddy_url: self.workbuddy_url.clone(),
+            skills_page: self.skills_page.clone(),
+            skills_tab: self.skills_tab.clone(),
         }
+    }
+
+    fn saved_llm(&self) -> Option<(String, String, String)> {
+        if self.llm_base.is_empty() || self.llm_model.is_empty() {
+            return None;
+        }
+        Some((
+            settings::llm_family(&self.llm_base).to_string(),
+            self.llm_model.clone(),
+            self.llm_base.clone(),
+        ))
+    }
+
+    fn persist_settings(&self) -> Result<(), String> {
+        let saved = ProductSettings {
+            llm_base: self.llm_base.clone(),
+            llm_model: self.llm_model.clone(),
+            workbuddy_url: self.workbuddy_url.clone(),
+        };
+        settings::save_product_settings(&settings_path(), &saved)
+    }
+
+    fn refresh_settings_lines(&mut self) {
+        self.cursor_key_line = cursor_key_line();
+        self.bridge_line = match locate_bridge() {
+            Ok(path) => format!(
+                "Cursor Bridge  {PINNED_BRIDGE_VERSION}  sdk.v1  {}",
+                path.display()
+            ),
+            Err(err) => format!("Cursor Bridge  {err}"),
+        };
+        self.llm_line = if self.llm_base.is_empty() {
+            "还没保存 LLM。示例地址 http://127.0.0.1:11434/v1".into()
+        } else {
+            format!(
+                "已保存  {}  {}  {}",
+                settings::llm_family(&self.llm_base),
+                self.llm_model,
+                self.llm_base
+            )
+        };
+        if self.judge_line.is_empty() {
+            self.judge_line = "界面里用规则判断。测试会询问本机 Ollama。".into();
+        }
+        self.idf_line = idf_line();
+        if self.workbuddy_line.is_empty() {
+            self.workbuddy_line = if self.workbuddy_url.is_empty() {
+                "未配置。填写本机 WorkBuddy 桥地址后再探测。".into()
+            } else {
+                format!("地址 {}", self.workbuddy_url)
+            };
+        }
+    }
+
+    fn save_cursor_key(&mut self, key: String) {
+        let key = key.trim().to_string();
+        if key.is_empty() {
+            self.hint = "Cursor Key 是空的，没有写入。".into();
+            return;
+        }
+        let store = match CredentialStore::default_location() {
+            Ok(store) => store,
+            Err(err) => {
+                self.hint = format!("找不到凭据目录：{err}");
+                return;
+            }
+        };
+        if let Err(err) = store.set(CURSOR_API_KEY, &livstyle_secrets::Secret::new(key)) {
+            self.hint = format!("Cursor Key 没有写入：{err}");
+            return;
+        }
+        self.hint = "Cursor Key 已写入凭据文件。".into();
+        self.open_cursor();
+        self.refresh_settings_lines();
+    }
+
+    fn remove_cursor_key(&mut self) {
+        self.cursor = None;
+        match CredentialStore::default_location().and_then(|store| store.remove(CURSOR_API_KEY)) {
+            Ok(true) => self.hint = "已从凭据文件移除 Cursor Key。".into(),
+            Ok(false) => {
+                self.hint = "凭据文件里没有 Cursor Key。如果写在环境变量或 .env 里，请直接清空那一项。".into();
+            }
+            Err(err) => self.hint = format!("没有移除 Cursor Key：{err}"),
+        }
+        self.refresh_settings_lines();
+        self.cursor_status = match CredentialStore::default_location()
+            .and_then(|store| store.get(CURSOR_API_KEY))
+        {
+            Ok(Some(secret)) => format!("Cursor  已配置 {}", secret.fingerprint()),
+            _ => "Cursor  还没有 Key".into(),
+        };
+    }
+
+    fn reconnect_cursor(&mut self) {
+        self.cursor = None;
+        self.open_cursor();
+        self.refresh_settings_lines();
+        self.hint = self.cursor_status.clone();
+    }
+
+    fn save_llm(&mut self, base: String, model: String) {
+        match settings::normalize_llm(&base, &model) {
+            Err(err) => self.hint = err,
+            Ok((base, model, family)) => {
+                self.llm_base = base;
+                self.llm_model = model;
+                if let Err(err) = self.persist_settings() {
+                    self.hint = format!("模型没有写入本机设置：{err}");
+                    return;
+                }
+                self.refresh_settings_lines();
+                if self.octos.is_none() {
+                    self.hint = "模型已保存在本机。Octos 连上后，下一轮会写成 profile 主模型。".into();
+                    return;
+                }
+                match self.push_llm() {
+                    Ok(()) => {
+                        self.hint = format!("Octos profile livstyle 的主模型已设为 {family} {}。", self.llm_model);
+                    }
+                    Err(err) => self.hint = format!("模型已保存在本机，但没有写进 Octos：{err}"),
+                }
+            }
+        }
+    }
+
+    fn push_llm(&self) -> Result<(), String> {
+        let Some((family, model, base)) = self.saved_llm() else {
+            return Err("还没有保存模型".into());
+        };
+        let client = self.octos.as_ref().ok_or("Octos 没连上")?;
+        client.create_profile("livstyle").ok();
+        client
+            .upsert_primary_llm("livstyle", &family, &model, &base)
+            .map(|_| ())
+            .map_err(|err| err.to_string())
+    }
+
+    fn test_judge(&mut self) {
+        match pick_ollama_model() {
+            Ok(model) => {
+                self.judge_line = format!("Ollama 可用，当前会选用 {model}。界面判断仍走规则。");
+                self.hint = self.judge_line.clone();
+            }
+            Err(err) => {
+                self.judge_line = format!("Ollama 没有通过：{err}");
+                self.hint = self.judge_line.clone();
+            }
+        }
+    }
+
+    fn probe_workbuddy(&mut self, url: String) {
+        let url = match settings::loopback_http_url(&url) {
+            Ok(url) => url,
+            Err(err) => {
+                self.workbuddy_line = err.clone();
+                self.hint = err;
+                return;
+            }
+        };
+        self.workbuddy_url = url.clone();
+        if let Err(err) = self.persist_settings() {
+            self.hint = format!("WorkBuddy 地址没有保存：{err}");
+            self.workbuddy_line = self.hint.clone();
+            return;
+        }
+        let parsed = match Url::parse(&url) {
+            Ok(parsed) => parsed,
+            Err(err) => {
+                self.workbuddy_line = err.to_string();
+                self.hint = self.workbuddy_line.clone();
+                return;
+            }
+        };
+        let probed = http_send(
+            Request::get(&parsed).read_timeout(Some(Duration::from_secs(3))),
+        );
+        self.workbuddy_line = match probed {
+            Ok(response) if response.is_success() => {
+                format!("WorkBuddy 桥已响应 HTTP {}", response.status)
+            }
+            Ok(response) => format!("WorkBuddy 桥有响应，HTTP {}", response.status),
+            Err(err) => format!("没有连上 WorkBuddy 桥：{err}"),
+        };
+        self.hint = self.workbuddy_line.clone();
     }
 }
 
@@ -1594,8 +2207,8 @@ fn notice(title: &str, body: &str) -> Card {
         title: title.into(),
         body: body.into(),
         primary: "关闭".into(),
-        secondary: "关闭".into(),
-        dismiss: "关闭".into(),
+        secondary: String::new(),
+        dismiss: String::new(),
         kind: CardKind::Settings,
     }
 }
@@ -1622,22 +2235,47 @@ fn unknown_card() -> Card {
     }
 }
 
-fn settings_card() -> Card {
-    let key = CredentialStore::default_location()
-        .ok()
-        .and_then(|store| store.get(CURSOR_API_KEY).ok().flatten())
-        .map(|secret| format!("已配置  指纹 {}", secret.fingerprint()))
-        .unwrap_or_else(|| "未配置。请在命令行执行 livstyle auth cursor".into());
-    Card {
-        title: "设置".into(),
-        body: format!(
-            "Cursor API Key   {key}\n写入 .env 的 CURSOR_API_KEY= ，不要贴到聊天里\nCursor Bridge    v1.0.38  sdk.v1\nJudge            规则判断（界面内）；Ollama 用 livstyle judge eval\nESP-IDF          livstyle toolchain\n应用迭代         底座刷过之后走局域网热替换，不每次 USB 重烧"
+fn cursor_key_line() -> String {
+    match CredentialStore::default_location().and_then(|store| store.get_hit(CURSOR_API_KEY)) {
+        Ok(Some(hit)) => format!(
+            "Cursor API Key  已配置  指纹 {}  {}",
+            hit.secret.fingerprint(),
+            hit.source
         ),
-        primary: "关闭".into(),
-        secondary: "关闭".into(),
-        dismiss: "关闭".into(),
-        kind: CardKind::Settings,
+        Ok(None) => "Cursor API Key  未配置。填在下面，不要贴到对话里。".into(),
+        Err(err) => format!("Cursor API Key  读取失败：{err}"),
     }
+}
+
+fn idf_line() -> String {
+    let toolchain = livstyle_esp::Toolchain::detect(None);
+    match toolchain.selected() {
+        Some(install) => {
+            let source = match install.source {
+                InstallSource::Eim => "EIM",
+                InstallSource::Env => "IDF_PATH",
+            };
+            let openocd = if toolchain.openocd.is_some() {
+                "openocd 有"
+            } else {
+                "openocd 无"
+            };
+            format!(
+                "ESP-IDF {} ({source})  {}  {}",
+                install.version,
+                install.path.display(),
+                openocd
+            )
+        }
+        None if toolchain.problems.is_empty() => {
+            "没有找到 ESP-IDF。可以安装 EIM，或设置 IDF_PATH。".into()
+        }
+        None => toolchain.problems.join("；"),
+    }
+}
+
+fn settings_path() -> std::path::PathBuf {
+    data_dir().join("settings.json")
 }
 
 impl State {

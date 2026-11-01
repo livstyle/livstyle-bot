@@ -13,7 +13,7 @@ mod transport;
 
 pub use bridge::{Bridge, BridgeConfig, PINNED_BRIDGE_VERSION, locate_bridge};
 pub use client::{
-    account_status_line, AgentHandle, CursorClient, ModelInfo, UserInfo, VersionInfo, runtime_caps,
+    AgentHandle, CursorClient, ModelInfo, UserInfo, VersionInfo, account_status_line, runtime_caps,
 };
 pub use errors::{CursorError, SdkErrorCode, SdkErrorDetails};
 pub use ready::{ReadyInfo, parse_ready_line};

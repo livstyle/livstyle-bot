@@ -15,5 +15,6 @@ livstyle-esp.workspace = true
 livstyle-hardware.workspace = true
 livstyle-cursor.workspace = true
 livstyle-octos.workspace = true
+livstyle-skills.workspace = true
 livstyle-http.workspace = true
 serde_json.workspace = true

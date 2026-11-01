@@ -298,12 +298,8 @@ mod tests {
 
     #[test]
     fn local_create_agent_omits_idempotency_key() {
-        let body = local_create_agent_body(
-            "composer-2",
-            Path::new("/tmp/ws"),
-            Some("livstyle"),
-            "key",
-        );
+        let body =
+            local_create_agent_body("composer-2", Path::new("/tmp/ws"), Some("livstyle"), "key");
         assert!(body.get("idempotencyKey").is_none());
         assert_eq!(
             body.pointer("/options/local/cwd").cloned(),

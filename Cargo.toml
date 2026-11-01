@@ -15,6 +15,7 @@ members = [
     "crates/livstyle-esp",
     "crates/livstyle-octos",
     "crates/livstyle-core",
+    "crates/livstyle-skills",
     "crates/livstyle-app",
 ]
 
@@ -38,6 +39,7 @@ livstyle-esp = { path = "crates/livstyle-esp" }
 livstyle-workspace = { path = "crates/livstyle-workspace" }
 livstyle-octos = { path = "crates/livstyle-octos" }
 livstyle-core = { path = "crates/livstyle-core" }
+livstyle-skills = { path = "crates/livstyle-skills" }
 
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
